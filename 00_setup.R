@@ -1,14 +1,24 @@
-library(flexdashboard)
-library(WDI)
-library(wbgdata)
-library(plotly)
-library(shiny)
-library(reshape2)
-library(readxl)
-library(treemap)
-library(d3treeR)
-library(Hmisc)
-library(wbgcharts)
-library(wbgmaps)
-library(wbggeo)
-library(leaflet)
+
+#--------- make sure everyvody has the required packages
+
+pkg_needed <- c("flexdashboard",
+                "WDI",
+                "wbgdata",
+                "plotly",
+                "shiny",
+                "reshape2",
+                "readxl",
+                "treemap",
+                "d3treeR",
+                "Hmisc",
+                "wbgcharts",
+                "wbgmaps",
+                "wbggeo",
+                "leaflet")
+
+a <- pkg_needed  %in% installed.packages()[,1]
+pkg_toinstall <- pkg_needed[!a]  # packages not avaialble in pc
+if (length(pkg_toinstall) > 0) {
+  install.packages(pkg_toinstall)
+}
+  
