@@ -10,7 +10,7 @@ output:
 
 source("styles.R")
 source("00_setup.R")
-#source("01_get_data.R")
+source("01_get_data.R")
 source("02_prep_data.R")
 ```
 
@@ -22,13 +22,13 @@ Row { .sidebar}
 selectInput("variable",
                "Indicator A:",
                 choices = c(unique(as.character(dfm$variable))),                       
-                selected = "SH.DTH.COMM.ZS"
+                selected = "confirmed"
                 )    
 
 selectInput("variable2",
                "Indicator B:",
                 choices = c(unique(as.character(dfm$variable))),                       
-                selected = "SH.MED.PHYS.ZS"
+                selected = "Hospital beds (per 1,000 people)"
                 )  
 
 selectizeInput("Country Name",
@@ -43,13 +43,15 @@ selectizeInput("Country Name",
 
 ```
 
-Row  {data-height=400}
+Row  {data-height=400 .tabset}
 -----------------------------------------------------------------------
+### Treemap
 ```{r}
-ccc <- dfm[dfm$variable == "confirmed",]
+ccc2 <- dfm[dfm$variable == "confirmed",]
 
-#d3tree2(
-  treemap(ccc,
+d3tree2(
+  treemap(ccc2,
+          draw = F,
              index=c("Region", "name"),
              vSize="mrv",
              type="index",
@@ -61,26 +63,31 @@ ccc <- dfm[dfm$variable == "confirmed",]
                c("center", "center"), 
                c("right", "bottom")
              )
-  )
-#      ),  
-#      rootname = "World" )
+      ),  
+      rootname = "World" )
 
 ```
 
-
-### Alt2
+### Bubble map
 ```{r}
-figure(
-       data = ccc,
-        plot = function(cnm, style = style_atlas_open(), quality = "low") {
-        breaks = c(200, 5000, 20000)
-        wbg_bubble_map(cnm, wbgmaps[[quality]], style, "mrv",
-        breaks,
-        max_size = 2
-        )
-        },
-        aspect_ratio = 1.5
-       )
+leaflet(ccc) %>% 
+  addTiles()  %>% 
+  addCircleMarkers(~longitude, ~latitude, label = ~longlab,
+                   radius = ~ sqrt(mrv/10),
+                   stroke = FALSE, fillOpacity = 0.5, weight = 1) 
+
+
+# figure(
+#        data = ccc,
+#         plot = function(cnm, style = style_atlas_open(), quality = "low") {
+#         breaks = c(200, 5000, 20000)
+#         wbg_bubble_map(cnm, wbgmaps[[quality]], style, "mrv",
+#         breaks,
+#         max_size = 2
+#         )
+#         },
+#         aspect_ratio = 1.5
+#        )
 
 # renderLeaflet({
 #   

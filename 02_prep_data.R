@@ -1,42 +1,5 @@
 
 # WDI data ----------------------------------------------------------------
-
-indicators <-
-  c(
-    "SH.MED.BEDS.ZS",
-    "SH.MED.NUMW.P3",
-    "SH.MED.PHYS.ZS",
-    "SH.UHC.SRVS.CV.XD",
-    "SH.DYN.NCOM.ZS",
-    "SH.DYN.NCOM.FE.ZS",
-    "SH.DYN.NCOM.MA.ZS",
-    "SH.STA.DIAB.ZS",
-    "SH.PRV.SMOK",
-    "SH.PRV.SMOK.FE",
-    "SH.PRV.SMOK.MA",
-    "SH.DTH.COMM.ZS",
-    "SH.DTH.INJR.ZS",
-    "SH.DTH.NCOM.ZS",
-    "SH.XPD.OOPC.CH.ZS",
-    "SH.XPD.OOPC.PC.CD",
-    "SH.XPD.OOPC.PP.CD",
-    "SH.UHC.OOPC.10.ZS",
-    "SH.UHC.OOPC.25.ZS",
-    "SH.STA.HYGN.ZS",
-    "SH.STA.HYGN.UR.ZS",
-    "SH.STA.HYGN.RU.ZS",
-    "SP.POP.80UP.FE.5Y",
-    "SP.POP.80UP.MA.5Y",
-    "SP.POP.65UP.FE.ZS",
-    "SP.POP.65UP.MA.ZS",
-    "SP.POP.65UP.TO.ZS",
-    "SP.POP.0014.FE.ZS",
-    "SP.POP.0014.MA.ZS",
-    "SP.POP.0014.TO.ZS",
-    "SP.POP.1564.FE.ZS",
-    "SP.POP.1564.MA.ZS",
-    "SP.POP.1564.TO.ZS"
-  )
 # Replace with local data
 df <- readr::read_rds("input/wbgdata.rds")
 
@@ -56,6 +19,13 @@ mry$date <- 2019
 
 dfm <- merge(dfm, mry, by = c("date", "iso3c", "variable"), all.x = T)
 
+# merging indicator metadata
+indicator_list <- indicator_list %>%
+  rename("variable" = "name")
+dfm <- dfm %>%
+  rename("varcode" = "variable")
+
+dfm <- merge(dfm, indicator_list, by.x = "varcode", by.y = "code", all.x = T)
 
 # COVID data --------------------------------------------------------------
 
