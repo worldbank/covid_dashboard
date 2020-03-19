@@ -11,7 +11,8 @@ pkg_needed <- c("flexdashboard",
                 "treemap",
                 "Hmisc",
                 "leaflet",
-                "rjson"
+                "rjson",
+                "ggiraph"
 )
 
 a <- pkg_needed  %in% installed.packages()[,1]
