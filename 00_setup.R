@@ -10,7 +10,9 @@ pkg_needed <- c("flexdashboard",
                 "readxl",
                 "treemap",
                 "Hmisc",
-                "leaflet")
+                "leaflet",
+                "rjson"
+)
 
 a <- pkg_needed  %in% installed.packages()[,1]
 pkg_toinstall <- pkg_needed[!a]  # packages not avaialble in pc
@@ -40,5 +42,6 @@ lapply(pkg_needed, library, character.only = TRUE)
 if (!("d3treeR" %in% installed.packages()[,1])) {
   devtools::install_github("timelyportfolio/d3treeR")
 }
+
 library("d3treeR")
 
