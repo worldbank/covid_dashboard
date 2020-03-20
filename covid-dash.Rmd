@@ -10,8 +10,29 @@ output:
 
 source("styles.R")
 source("00_setup.R")
-#source("01_get_data.R")
-source("02_prep_data.R")
+library(pins)
+board_register_rsconnect("rsconnect", 
+                         server = "http://w0lxopshyprd1b.worldbank.org:3939")
+
+# Retrieve Pin 
+
+names <- c(
+  "dfm",
+  "ccc",
+  "fullcd",
+  "wld_data",
+  "ctry_data",
+  "full_country_data",
+  "indicator_list",
+  "df"
+)
+
+for (i in seq_along(names)) {
+  fullname <- paste0("tonyfujs/", names[i])
+  f        <- pin_get(fullname, board = "rsconnect")
+  assign(names[i], f)
+}
+
 ```
 
 Sidebar { .sidebar data-width=250}
