@@ -52,19 +52,28 @@ readr::write_rds(df, "input/wbgdata.rds")
 daturl = paste("http://cvapi.zognet.net/all.json")
 
 # get world covid-19 data
-dat_raw_1 = RJSONIO::fromJSON(daturl, nullValue=NA)[[1]]
-dat_raw_2 = RJSONIO::fromJSON(daturl, nullValue=NA)[[2]]
+country_url = paste("http://cvapi.zognet.net/manifest.json")
+world_url = paste("http://cvapi.zognet.net/world.json")
 
-readr::write_rds(dat_raw_1, "input/dat_raw_1.rds")
-readr::write_rds(dat_raw_2, "input/dat_raw_2.rds")
+
+# get world covid-19 data
+ctry_data <- jsonlite::fromJSON(country_url)
+wld_data <- jsonlite::fromJSON(world_url)$data
+wld_data$iso <- "WLD"
+wld_data$name <- "World"
+wld_data <- wld_data[, c("iso", "name", "date", "confirmed", "deaths", "recovered")]
+
+readr::write_rds(ctry_data, "input/ctry_data.rds")
+readr::write_rds(wld_data, "input/wld_data.rds")
 
 # get country list
-country_list = dat_raw_1$countries
+country_list = names(ctry_data)
 
 # country level covid-19 data
-full_country_data <- data.frame()
-for (country in country_list){ # loop through countries
-  daturl = paste("http://cvapi.zognet.net/", country, ".json", sep = "")
+full_country_data <- vector(mode = "list", length = length(country_list))
+
+for ( i in seq_along(country_list)) { # loop through countries
+  daturl = paste("http://cvapi.zognet.net/", country_list[i], ".json", sep = "")
   country_info = RJSONIO::fromJSON(daturl, nullValue=NA)[[1]]
   iso = country_info[["iso"]]
   name = country_info[["name"]]
@@ -73,8 +82,12 @@ for (country in country_list){ # loop through countries
   country_data = data.frame(do.call('rbind', country_data), stringsAsFactors = FALSE)
   colnames(country_data) = c( "date", "confirmed", "deaths", "recovered")
   country_data <- cbind(iso, name, country_data) # add country info to the data set
-  full_country_data<-rbind(full_country_data, country_data) # attach the country info to the full list
+  country_data$iso <- as.character(country_data$iso)
+  country_data$name <- as.character(country_data$name)
+  full_country_data[[i]] <- country_data # attach the country info to the full list
 }
+
+full_country_data <- dplyr::bind_rows(full_country_data)
 
 readr::write_rds(full_country_data, "input/full_country_data.rds")
 

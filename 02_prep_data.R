@@ -31,15 +31,7 @@ dfm <- merge(dfm, indicator_list, by.x = "varcode", by.y = "code", all.x = T)
 
 # COVID data --------------------------------------------------------------
 
-dat_raw_1 <- readr::read_rds("input/dat_raw_1.rds")
-dat_raw_2 <- readr::read_rds("input/dat_raw_2.rds")
-
-wld_data = lapply(dat_raw_2, function(j) cbind(j$date, j$confirmed, j$deaths, j$recovered))
-wld_data = data.frame(do.call('rbind', wld_data), stringsAsFactors = FALSE)
-colnames(wld_data) = c( "date", "confirmed", "deaths", "recovered")
-iso = dat_raw_1[["iso"]]
-name = dat_raw_1[["name"]]
-wld_data <- cbind(iso, name, wld_data) 
+wld_data <- readr::read_rds("input/wld_data.rds")
 
 # get country list
 full_country_data <- readr::read_rds("input/full_country_data.rds")
