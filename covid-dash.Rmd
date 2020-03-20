@@ -10,7 +10,7 @@ output:
 
 source("styles.R")
 source("00_setup.R")
-source("01_get_data.R")
+#source("01_get_data.R")
 source("02_prep_data.R")
 ```
 
@@ -218,9 +218,12 @@ uiOutput("dynamic")
 
 output$dynamic <- renderUI({ 
   if (input$variable == "confirmed" | input$variable == "recovered" |
-      input$variable == "deaths") plotlyOutput("plot1")
-  else plotlyOutput("plot2")
-  })
+      input$variable == "deaths") {
+    plotlyOutput("plot1")
+  } else {
+    plotlyOutput("plot2")
+  }
+})
 
 
 output$plot1 <- renderPlotly({

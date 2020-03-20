@@ -20,6 +20,8 @@ mry$date <- 2019
 dfm <- merge(dfm, mry, by = c("date", "iso3c", "variable"), all.x = T)
 
 # merging indicator metadata
+indicator_list <- readr::read_rds("input/indicator_list.rds")
+
 indicator_list <- indicator_list %>%
   rename("variable" = "name")
 dfm <- dfm %>%
@@ -83,3 +85,4 @@ ccc$longitude <- as.numeric(as.character(ccc$longitude))
 ccc$latitude <- as.numeric(as.character(ccc$latitude))
 ccc$longlab <- paste0(ccc$name, ": ", ccc$mrv)
 ccc <- na.omit(ccc)
+

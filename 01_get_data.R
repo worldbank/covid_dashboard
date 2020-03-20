@@ -80,11 +80,11 @@ readr::write_rds(full_country_data, "input/full_country_data.rds")
 
 # indicator list metadata
 json_file <- "https://raw.githubusercontent.com/worldbank/decdg-covid19/master/covid-indicators.json"
-dat = fromJSON(paste(readLines(json_file), collapse=""))
+dat = RJSONIO::fromJSON(paste(readLines(json_file), collapse=""))
 
 indicator_list <- data.frame()
 for (subdat in dat) {
-  ind = data.frame(do.call('rbind', subdat$indicators), stringsAsFactors = FALSE)
+  ind = data.frame(do.call('rbind', as.list(subdat$indicators)), stringsAsFactors = FALSE)
   topic = subdat$topic
   ind <- cbind(code = rownames(ind), ind)
   #rownames(ind) <- 1:nrow(ind)
@@ -94,4 +94,4 @@ for (subdat in dat) {
   indicator_list<-rbind(indicator_list, ind)
 }
 
-
+readr::write_rds(indicator_list, "input/indicator_list.rds")
