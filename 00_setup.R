@@ -1,6 +1,7 @@
+
 library(flexdashboard)
 library(WDI)
-library(wbgdata)
+#library(wbgdata)
 library(plotly)
 library(shiny)
 library(reshape2)
@@ -8,9 +9,9 @@ library(readxl)
 library(treemap)
 library(d3treeR)
 library(Hmisc)
-library(wbgcharts)
-library(wbgmaps)
-library(wbggeo)
+#library(wbgcharts)
+#library(wbgmaps)
+#library(wbggeo)
 library(leaflet)
 
 #--------- make sure everyvody has the required packages
