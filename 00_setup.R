@@ -11,6 +11,7 @@ library(Hmisc)
 library(wbgcharts)
 library(wbgmaps)
 library(wbggeo)
+library(tidyverse)
 library(leaflet)
 
 #--------- make sure everyvody has the required packages
