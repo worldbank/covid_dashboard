@@ -7,6 +7,9 @@ dfm <- melt(df, id = c("iso3c", "date"))
 
 dfmo <- dfm[!is.na(dfm$value),]
 
+# MRV only 2005 onwards
+dfmo <- dfmo[dfmo$date > 2004, ] 
+
 mry <- dfmo %>% 
   group_by(iso3c, variable) %>% # filter to max year, each indicator, each country
   filter(date == max(date))
