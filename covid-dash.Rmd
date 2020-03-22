@@ -7,11 +7,9 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-
 source("styles.R")
 source("00_setup.R")
-#source("01_get_data.R")
-source("02_prep_data.R")
+source("03_load_data.R")
 
 ```
 
@@ -22,20 +20,30 @@ Sidebar { .sidebar data-width=250}
 
 selectInput("variable",
                "Indicator Y-axis:",
-                choices = c(unique(as.character(dfm$variable))),                       
+                choices = list(
+                  `Age & Population` = sort(unique(dfm[dfm$topic == "Age & Population",]$variable)),
+                  `COVID-19` = sort(unique(dfm[dfm$topic == "COVID-19",]$variable)),
+                   Health = sort(unique(dfm[dfm$topic == "Health",]$variable)),
+                  `Water & Sanitation` = sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))),  
                 selected = "COVID-19 Cases: Confirmed"
                 )    
 
 selectInput("variable2",
                "Indicator X-axis:",
-                choices = c(unique(as.character(dfm$variable))),                       
-                selected = "Hospital beds (per 1,000 people)"
+                choices = list(
+                  `Age & Population` = sort(unique(dfm[dfm$topic == "Age & Population",]$variable)),
+                  `COVID-19` = sort(unique(dfm[dfm$topic == "COVID-19",]$variable)),
+                   Health = sort(unique(dfm[dfm$topic == "Health",]$variable)),
+                  `Water & Sanitation` = sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))),                 selected = "Hospital beds (per 1,000 people)"
                 ) 
 
 selectInput("size",
                "Size:",
-                choices = c(unique(as.character(dfm$variable))),                       
-                selected = "Population ages 65 and above (% of total)"
+                choices = list(
+                  `Age & Population` = sort(unique(dfm[dfm$topic == "Age & Population",]$variable)),
+                  `COVID-19` = sort(unique(dfm[dfm$topic == "COVID-19",]$variable)),
+                   Health = sort(unique(dfm[dfm$topic == "Health",]$variable)),
+                  `Water & Sanitation` = sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))),                 selected = "Population ages 65 and above (% of total)"
                 ) 
 
 selectizeInput("Country Name",
@@ -43,76 +51,45 @@ selectizeInput("Country Name",
                 c(unique(as.character(dfm$`Short Name`))),
                 multiple = TRUE, selected = c("China", "Italy"))
 
-sliderInput(inputId = "date",
-            label = "Date:",
-            min = min(tmp$date),
-            max = max(tmp$date),
-            value = c(min(tmp$date), max(tmp$date)))
-
-
 ```
 
 Row  {data-height=500}
 -----------------------------------------------------------------------
+
+### Explore relationships
 ```{r}
 renderPlotly ({
 
   df2 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable, ]
-  df3 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable2, c(1, 7)]
-  dfs <- dfm[dfm$date == 2019 & dfm$variable %in% input$size, c(1, 7)]
+  df3 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable2, c(1, 6)]
+  dfs <- dfm[dfm$date == 2019 & dfm$variable %in% input$size, c(1, 6)]
    
     dfs <- dfs %>%
           rename("siz" = "mrv")
-  
+
+     
     df3 <- df3 %>%
           rename("mrv2" = "mrv")
   
     df4 <- merge(df2, df3, by = c("iso3c"))   
-    df4 <- merge(df4, dfs, by = c("iso3c"))          
+    df4 <- merge(df4, dfs, by = c("iso3c"))  
+  
 
   plot_ly(data = df4) %>%
-    add_trace(x = ~mrv2, y = ~mrv, type = 'scatter', mode = 'markers', color = ~Region,
-              marker = list(size = ~siz, 
-                            opacity = ifelse(df4$`Short Name` %in% input$`Country Name`, 1, 0.5)),
+    add_trace(x = ~mrv2, y = ~mrv, type = 'scatter', mode = 'markers', color = ~Region, size = ~siz, 
+              opacity = ifelse(df4$`Short Name` %in% input$`Country Name`, 1, 0.5), ## opacity not working
               hoverinfo = 'text',
               text = ~paste(df4$`Short Name`)) %>%
-      layout(xaxis = list(zeroline = FALSE, showline = FALSE, showgrid = T, title = input$variable2),
-             yaxis = list(zeroline = FALSE, showline = FALSE, showgrid = T, title = input$variable))
+      layout(xaxis = list(zeroline = FALSE, showline = FALSE, showgrid = T, title = input$variable2,
+                          range = c(min(df4$variable), max(df4$variable))),
+             yaxis = list(zeroline = FALSE, showline = FALSE, showgrid = T, title = input$variable,
+                          range = c(min(df4$variable), max(df4$variable))))
       })
-
-# renderggiraph({
-#   
-#   df2 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable, ]
-#   df3 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable2, c(1, 7)]
-#   dfs <- dfm[dfm$date == 2019 & dfm$variable %in% input$size, c(1, 7)]
-# 
-#   dfs <- dfs %>%
-#           rename("siz" = "mrv")
-#   
-#   df3 <- df3 %>%
-#           rename("mrv2" = "mrv")
-#   
-#   df4 <- merge(df2, df3, by = c("iso3c"))   
-#   df4 <- merge(df4, dfs, by = c("iso3c"))   
-#   
-#   gp <- ggplot(data = df4) +
-#           geom_point_interactive(aes(x = mrv, y = mrv2, color = factor(Region),
-#           size = siz, tooltip = name), alpha = ifelse(df4$name %in% input$`Country Name`, 1, 0.5)) + 
-#         theme_minimal() +
-#         theme(
-#           axis.title = element_blank(),
-#           legend.position = "bottom",
-#           legend.title = element_blank()
-#             )
-# 
-# girafe(ggobj = gp)
-#   
-# })
-
 
 ```
 
 
+### Compare countries over time
 ```{r}
 
 uiOutput("dynamic")
@@ -126,25 +103,10 @@ output$dynamic <- renderUI({
   }
 })
 
-
-# output$plot1 <- renderPlotly({
-#   
-#   dft <- fullcd[fullcd$name %in% input$`Country Name` & fullcd$variable %in% input$variable,]  
-# 
-#   plot_ly(dft) %>%
-#   add_trace(x = ~date, y = ~value, name = ~name, type = 'scatter', mode = 'lines',
-#             color = ~name) %>%
-#       add_trace(x = ~date, y = ~value, name = ~name, type = 'scatter', mode = 'markers',
-#             color = ~name, showlegend = FALSE) %>%
-#   layout(xaxis = list(title = '', zeroline = FALSE, showline = FALSE, showgrid = T), 
-#          yaxis = list(title = input$variable, zeroline = FALSE, showline = FALSE, showgrid = T))
-# 
-# })
-
 output$plot1 <- renderPlotly({
   
   dft <- fullcd2[fullcd2$`Short Name` %in% input$`Country Name` & fullcd2$variable %in% input$variable,]  
-  
+
   dft %>%
   arrange(date) %>%
   plot_ly() %>%
@@ -173,7 +135,7 @@ output$plot2 <- renderPlotly({
 
 ```
 
-Row  {data-height=100}
+Row  {data-height=130}
 -----------------------------------------------------------------------
 ### World
 ```{r}
@@ -208,17 +170,16 @@ renderValueBox({
 })
 ```
 
-Row  {data-height=400}
+Row  {data-height=370}
 -----------------------------------------------------------------------
-### Treemap
+### Confirmed cases
 ```{r}
 plot_treemap <- function(input, case_type) {
   
-  tmp <- treemap_dat(case_type)
-  tmp <- tmp[tmp$date %in% input$date,]
+  tmp <- tmp[tmp$date == max(tmp$date),]
   
-  p <- d3tree3(
-    treemap(tmp,
+#  p <- d3tree3(
+   p <-  treemap(tmp,
             draw = T,
                index=c("Region", "name"),
                vSize="value",
@@ -231,37 +192,21 @@ plot_treemap <- function(input, case_type) {
                  c("center", "center"), 
                  c("right", "bottom")
                )
-    ),
-    rootname = str_to_title(case_type))
+#    ),
+#    rootname = "World"
+  )
   
   return(p)
 }
 
-renderD3tree3({
+renderPlot({
   plot_treemap(input, "COVID-19 Cases: Confirmed")
 })
 
-# 
-# ccc2 <- dfm[dfm$variable == "confirmed",]
-# 
-# d3tree2(
-#   treemap(ccc2,
-#           draw = F,
-#              index=c("Region", "name"),
-#              vSize="mrv",
-#              type="index",
-#              palette = "Set2",
-#              bg.labels = 150,
-#              title = "",
-#              border.col = "white",
-#              align.labels=list(
-#                c("center", "center"), 
-#                c("right", "bottom")
-#              )
-#       ),  
-#       rootname = "World" )
+# renderD3tree3({
+#   plot_treemap(input, "COVID-19 Cases: Deaths")
+# })
 
-# ```
 # 
 # ### Bubble map
 # ```{r}
@@ -300,16 +245,10 @@ renderD3tree3({
 
 ```
 
-### deaths
-```{r}
-renderD3tree3({
-  plot_treemap(input, "COVID-19 Cases: Deaths")
-})
-```
+### Death cases
 
-### recovered
 ```{r}
-renderD3tree3({
-  plot_treemap(input, "COVID-19 Cases: Recovered")
+renderPlot({
+  plot_treemap(input, "COVID-19 Cases: Deaths")
 })
 ```
