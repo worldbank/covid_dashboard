@@ -1,31 +1,25 @@
 
 # WDI data ----------------------------------------------------------------
 # Replace with local data
-df <- readr::read_rds("input/wbgdata.rds")
+dfm <-  readr::read_rds("input/wbgdata.rds") %>%
+  melt(id = c("iso3c", "date"))
 
-dfm <- melt(df, id = c("iso3c", "date"))
-
-dfmo <- dfm[!is.na(dfm$value),]
-
-mry <- dfmo %>% 
+mry <- dfm %>%
+  dplyr::filter(!is.na(value)) %>%
   group_by(iso3c, variable) %>% # filter to max year, each indicator, each country
-  filter(date == max(date))
+  dplyr::filter(date == max(date)) %>%
+  rename(mrv = value,
+         mry = date) %>%
+  mutate(
+    date = 2019
+  )
 
-mry <- mry %>%
-  rename("mrv" = "value") %>%
-  rename("mry" = "date")
-
-mry$date <- 2019
-
-dfm <- merge(dfm, mry, by = c("date", "iso3c", "variable"), all.x = T)
+dfm <- merge(dfm, mry, by = c("date", "iso3c", "variable"), all.x = T) %>%
+  rename(varcode = variable)
 
 # merging indicator metadata
-indicator_list <- readr::read_rds("input/indicator_list.rds")
-
-indicator_list <- indicator_list %>%
-  rename("variable" = "name")
-dfm <- dfm %>%
-  rename("varcode" = "variable")
+indicator_list <- readr::read_rds("input/indicator_list.rds") %>%
+  rename(variable = name)
 
 dfm <- merge(dfm, indicator_list, by.x = "varcode", by.y = "code", all.x = T)
 
@@ -34,75 +28,92 @@ dfm <- merge(dfm, indicator_list, by.x = "varcode", by.y = "code", all.x = T)
 wld_data <- readr::read_rds("input/wld_data.rds")
 
 # get country list
-full_country_data <- readr::read_rds("input/full_country_data.rds")
-
-full_country_data$date <- as.Date(full_country_data$date, "%Y/%m/%d")
-
-full_country_data$confirmed <- as.numeric(full_country_data$confirmed)
-full_country_data$recovered <- as.numeric(full_country_data$recovered)
-full_country_data$deaths <- as.numeric(full_country_data$deaths)
-
-full_country_data$`COVID-19 Cases: Active` <- full_country_data$confirmed - full_country_data$deaths - full_country_data$recovered
-full_country_data <- full_country_data %>%
-                        rename("COVID-19 Cases: Confirmed" = "confirmed",
-                               "COVID-19 Cases: Recovered" = "recovered",
-                               "COVID-19 Cases: Deaths" = "deaths")
+full_country_data <- readr::read_rds("input/full_country_data.rds") %>%
+  mutate(
+    date                     = as.Date(date, "%Y/%m/%d"),
+    confirmed                = as.numeric(confirmed),
+    recovered                = as.numeric(recovered),
+    deaths                   = as.numeric(deaths),
+    `COVID-19 Cases: Active` = confirmed - deaths - recovered
+  ) %>%
+  rename("COVID-19 Cases: Confirmed" = confirmed,
+         "COVID-19 Cases: Recovered" = recovered,
+         "COVID-19 Cases: Deaths"    = deaths)
 
 
-fullcd <- melt(full_country_data, id = c("iso", "name", "date"))
+fullcd <- melt(full_country_data, id = c("iso", "name", "date")) %>%
+  mutate(
+    value = as.numeric(value)
+  )
 
-fullcd$value <- as.numeric(fullcd$value)
+cc <- fullcd %>%
+  dplyr::filter(date ==  max(date)) %>%
+  rename(mrv = value) %>%
+  mutate(
+    date2 = 2019
+  )
 
-cc <- fullcd[fullcd$date == max(fullcd$date),]
-cc <- cc %>%
-  rename("mrv" = "value")
-
-cc$date2 <- 2019
-
-dfm <- merge(dfm, cc, by.x = c("iso3c", "variable", "date"),  by.y = c("iso", "variable", "date2"), 
-             all = T)
-
-dfm$mrv.x <- ifelse(!is.na(dfm$mrv.y), dfm$mrv.y, dfm$mrv.x)
-dfm$mrv.y <- name <- NULL
-dfm <- dfm %>%
-  rename("mrv" = "mrv.x")
+dfm <- merge(dfm, cc, by.x = c("iso3c", "variable", "date"), 
+             by.y = c("iso", "variable", "date2"), 
+             all = T) %>%
+  mutate(
+    mrv.x = ifelse(!is.na(mrv.y), mrv.y, mrv.x)
+  ) %>%
+  select(-mrv.y) %>%
+  rename(mrv = mrv.x)
 
 # Country metadata --------------------------------------------------------
 
-cm <- read_excel("input/country_metadata.xlsx",
-                 sheet = "Country - Metadata")
-cm1 <- cm[, c(1, 3, 4, 30)]
+cm <- read_excel("input/country_metadata.xlsx", sheet = "Country - Metadata") %>%
+  select("Code",
+         "Income Group",
+         "Region",
+         "Short Name"
+         )
 
-dfm <- merge(dfm, cm1, by.x = "iso3c", by.y = "Code", all.x = T)
-dfm <- dfm[!is.na(dfm$Region),]
+dfm <- merge(dfm, cm, by.x = "iso3c", by.y = "Code", all.x = T) %>%
+  dplyr::filter(!is.na(Region))
 
 #fullcd <- merge(fullcd, cm1, by.x = "iso", by.y = "Code", all.x = T)
 #fullcd <- fullcd[fullcd$iso != "TWN",]
 
-wdi_dat <- WDI(indicator = c("SP.POP.TOTL"), start = 2018, end = 2018, extra = TRUE) 
-wdi <- wdi_dat[, c(3, 5, 8, 9)]
+wdi <- WDI(indicator = c("SP.POP.TOTL"), start = 2018, end = 2018, extra = TRUE) %>%
+  select(SP.POP.TOTL,
+         iso3c,
+         longitude,
+         latitude)
+
 
 #ccc <- fullcd[fullcd$variable == "confirmed",]
-ccc <- cc[cc$variable == "COVID-19 Cases: Confirmed",]
-
-ccc <- merge(ccc, wdi, by.x = "iso", by.y = "iso3c", all.x = T)
-ccc$longitude <- as.numeric(as.character(ccc$longitude))
-ccc$latitude <- as.numeric(as.character(ccc$latitude))
-ccc$longlab <- paste0(ccc$name, ": ", ccc$mrv)
-ccc <- na.omit(ccc)
+ccc <- cc %>%
+  filter(variable == "COVID-19 Cases: Confirmed") %>%
+  merge(wdi, by.x = "iso", by.y = "iso3c", all.x = T) %>%
+  mutate(
+    longitude = as.numeric(as.character(longitude)),
+    latitude  = as.numeric(as.character(latitude)),
+    longlab   = paste0(name, ": ", mrv)
+  ) %>%
+  na.omit()
 
 ## Treemap prep
-fullcd2 <- merge(fullcd, unique(dfm[,c('iso3c', 'Region', 'Short Name')]), 
-                 by.x = 'iso', by.y = 'iso3c', all.x = T)
-fullcd2 <- fullcd2[!is.na(fullcd2$`Short Name`),]
+fullcd2 <- fullcd %>%
+  merge(unique(dfm[,c('iso3c', 'Region', 'Short Name')]), 
+                 by.x = 'iso', by.y = 'iso3c', all.x = T) %>%
+  filter(!is.na("Short Name"))
 
-treemap_dat <- function(case_type = "COVID-19 Cases: Confirmed") {
-  
-  tmp <- fullcd2[fullcd2$variable == case_type,]
-  tmp <- tmp[which(tmp$value > 0),]
-  tmp$date <- as.Date(tmp$date)
-  
-  return(tmp)
-}
 
-tmp <- treemap_dat()
+
+tmp <- treemap_dat(df = fullcd2,
+                   case_type = "COVID-19 Cases: Confirmed")
+
+
+# Save data ---------------------------------------------------------------
+
+fst::write_fst(dfm, "input/prod/dfm.fst")
+fst::write_fst(ccc, "input/prod/ccc.fst")
+fst::write_fst(fullcd, "input/prod/fullcd.fst")
+fst::write_fst(fullcd2, "input/prod/fullcd2.fst")
+fst::write_fst(wld_data, "input/prod/wld_data.fst")
+fst::write_fst(indicator_list, "input/prod/indicator_list,fst")
+#fst::write_fst(tmp, "input/prod/temporary_file,fst")
+readr::write_rds(tmp, "input/prod/temporary_file,rds")

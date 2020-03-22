@@ -1,0 +1,12 @@
+name: covid-dash4
+title: covid-dash
+username: tonyfujs
+account: tonyfujs
+server: w0lxopshyprd1b.worldbank.org
+hostUrl: http://w0lxopshyprd1b.worldbank.org:3939/__api__
+appId: 427
+bundleId: 1700
+url: http://w0lxopshyprd1b.worldbank.org:3939/content/427/
+when: 1584737707.3619
+asMultiple: FALSE
+asStatic: FALSE
