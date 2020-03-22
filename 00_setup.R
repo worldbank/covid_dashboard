@@ -1,6 +1,5 @@
 library(flexdashboard)
 library(WDI)
-library(wbgdata)
 library(plotly)
 library(shiny)
 library(reshape2)
@@ -8,11 +7,11 @@ library(readxl)
 library(treemap)
 library(d3treeR)
 library(Hmisc)
-library(wbgcharts)
-library(wbgmaps)
-library(wbggeo)
 library(tidyverse)
 library(leaflet)
+library(fst)
+
+source("utils.R")
 
 #--------- make sure everyvody has the required packages
 
