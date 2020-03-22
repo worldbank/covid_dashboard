@@ -212,8 +212,8 @@ Row  {data-height=400}
 ```{r}
 plot_treemap <- function(input, case_type) {
   
-  tmp <- treemap_dat(df = fullcd2,
-                     case_type = case_type)
+  # tmp <- treemap_dat(df = fullcd2,
+  #                    case_type = case_type)
   tmp <- tmp[tmp$date %in% input$date,]
   
   p <- d3tree3(
