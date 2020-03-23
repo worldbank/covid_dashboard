@@ -11,6 +11,7 @@ library(Hmisc)
 library(tidyverse)
 library(leaflet)
 library(fst)
+library(wbstats)
 
 source("utils.R")
 
