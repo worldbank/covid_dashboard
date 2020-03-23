@@ -53,7 +53,7 @@ selectInput("size",
 selectizeInput("Country Name",
                 "Country (compare countries over time):",
                 c(unique(as.character(dfm$`Short Name`))),
-                multiple = TRUE, selected = c("China", "Italy", "United States", "Spain", "Italy"))
+                multiple = TRUE, selected = c("China", "Italy", "United States", "Spain", "Iran"))
 
 ```
 
