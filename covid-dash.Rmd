@@ -27,7 +27,7 @@ selectInput("variable",
                   `COVID-19` = covid,
                    Health = health,
                   `Water & Sanitation` = water),  
-                selected = "COVID-19 Cases: Confirmed"
+                selected = "COVID-19 Cases: Deaths"
                 )    
 
 selectInput("variable2",
@@ -53,7 +53,7 @@ selectInput("size",
 selectizeInput("Country Name",
                 "Country (compare countries over time):",
                 c(unique(as.character(dfm$`Short Name`))),
-                multiple = TRUE, selected = c("China", "Italy"))
+                multiple = TRUE, selected = c("China", "Italy", "United States", "Spain", "Italy"))
 
 ```
 
