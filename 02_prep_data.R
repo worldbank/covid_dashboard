@@ -105,7 +105,7 @@ fullcd2 <- fullcd %>%
                  by.x = 'iso', by.y = 'iso3c', all.x = T) %>%
   filter(!is.na("Short Name"))
 
-
+fullcd2 <- fullcd2[!is.na(fullcd2$`Short Name`),]
 
 tmp <- treemap_dat(df = fullcd2,
                    case_type = "COVID-19 Cases: Confirmed")

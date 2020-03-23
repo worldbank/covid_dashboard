@@ -60,7 +60,7 @@ selectizeInput("Country Name",
 
 Row  {data-height=130}
 -----------------------------------------------------------------------
-### World
+### World, `r my_date`
 ```{r}
 renderValueBox({
   con <- wld_data %>%
@@ -68,11 +68,12 @@ renderValueBox({
     select(`COVID-19 cases: Confirmed`)
     con <- format(con, big.mark=",")
     de <- paste0("Confirmed: ", con)
-  valueBox(de, icon = "fa-users")
+  valueBox(tags$p(de, style = "font-size: 80%;"), 
+           icon = "fa-users")
 })
 ```
 
-### World
+### World, `r my_date`
 ```{r}
 renderValueBox({
   con <- wld_data %>%
@@ -80,11 +81,12 @@ renderValueBox({
     select(`COVID-19 cases: Active`)
     con <- format(con, big.mark=",")
     de <- paste0("Active: ", con)
-  valueBox(de, icon = "fa-users")
+  valueBox(tags$p(de, style = "font-size: 80%;"), 
+           icon = "fa-users")
 })
 ```
 
-### World
+### World, `r my_date`
 ```{r}
 renderValueBox({
   con <- wld_data %>%
@@ -92,12 +94,14 @@ renderValueBox({
     select(`COVID-19 cases: Deaths`)
   con <- format(con, big.mark=",")
   de <- paste0("Deaths: ", con)
-  valueBox(de, icon = "fa-users")
+  valueBox(tags$p(de, style = "font-size: 80%;"), 
+           icon = "fa-users")
 })
 ```
 
 Row  {data-height=500}
 -----------------------------------------------------------------------
+
 ### Explore relationships
 ```{r}
 renderPlotly ({
@@ -122,7 +126,7 @@ renderPlotly ({
               opacity = ifelse(df4$`Short Name` %in% input$`Country Name`, 1, 0.5), ## opacity not working
               hoverinfo = 'text',
               text = ~paste(df4$`Short Name`)) %>%
-      layout(legend = list(orientation = 'h'),
+      layout(legend = list(x = 0, y = -0.2, orientation = 'h'),
              xaxis = list(zeroline = FALSE, showline = FALSE, showgrid = T, title = input$variable2,
                           range = c(min(df4$variable), max(df4$variable))),
              yaxis = list(zeroline = FALSE, showline = FALSE, showgrid = T, title = input$variable,
@@ -196,19 +200,21 @@ selectInput("Country",
 
 Row  {data-height=130}
 -----------------------------------------------------------------------
-### Selected country
+### Selected country, `r my_date`
 ```{r}
+
 renderValueBox({
     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Confirmed" &
                    fullcd2$date == max(fullcd2$date) &
                    fullcd2$`Short Name` == input$Country), "value"]
     con <- format(con, big.mark=",")
     de <- paste0("Confirmed: ", con)
-  valueBox(de, icon = "fa-users")
+  valueBox(tags$p(de, style = "font-size: 80%;"), 
+           icon = "fa-users")
 })
 ```
 
-### Selected country name and date
+### Selected country, `r my_date`
 ```{r}
 renderValueBox({
     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Active" &
@@ -216,11 +222,12 @@ renderValueBox({
                    fullcd2$`Short Name` == input$Country), "value"]
     con <- format(con, big.mark=",")
     de <- paste0("Active: ", con)
-  valueBox(de, icon = "fa-users")
+  valueBox(tags$p(de, style = "font-size: 80%;"), 
+           icon = "fa-users")
 })
 ```
 
-### Selected country name and date
+### Selected country, `r my_date`
 ```{r}
 renderValueBox({
     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Deaths" &
