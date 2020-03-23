@@ -1,5 +1,5 @@
 ---
-title: "Development data and COVID-19 pandemic"
+title: "Understanding the COVID-19 pandemic through data"
 runtime: shiny
 output: 
   flexdashboard::flex_dashboard:
@@ -200,7 +200,7 @@ Row  {data-height=130}
 renderValueBox({
     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Confirmed" &
                    fullcd2$date == max(fullcd2$date) &
-                   fullcd2$name == input$Country), "value"]
+                   fullcd2$`Short Name` == input$Country), "value"]
     con <- format(con, big.mark=",")
     de <- paste0("Confirmed: ", con)
   valueBox(de, icon = "fa-users")
@@ -212,7 +212,7 @@ renderValueBox({
 renderValueBox({
     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Active" &
                    fullcd2$date == max(fullcd2$date) &
-                   fullcd2$name == input$Country), "value"]
+                   fullcd2$`Short Name` == input$Country), "value"]
     con <- format(con, big.mark=",")
     de <- paste0("Active: ", con)
   valueBox(de, icon = "fa-users")
@@ -224,10 +224,11 @@ renderValueBox({
 renderValueBox({
     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Deaths" &
                    fullcd2$date == max(fullcd2$date) &
-                   fullcd2$name == input$Country), "value"]
+                   fullcd2$`Short Name` == input$Country), "value"]
     con <- format(con, big.mark=",")
     de <- paste0("Deaths: ", con)
-  valueBox(de, icon = "fa-users")
+  valueBox(tags$p(de, style = "font-size: 80%;"), 
+           icon = "fa-users")
 })
 ```
 
