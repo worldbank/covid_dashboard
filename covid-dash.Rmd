@@ -21,29 +21,31 @@ Sidebar { .sidebar data-width=250}
 selectInput("variable",
                "Indicator Y-axis:",
                 choices = list(
-                  `Age & Population` = sort(unique(dfm[dfm$topic == "Age & Population",]$variable)),
-                  `COVID-19` = sort(unique(dfm[dfm$topic == "COVID-19",]$variable)),
-                   Health = sort(unique(dfm[dfm$topic == "Health",]$variable)),
-                  `Water & Sanitation` = sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))),  
+                  `Age & Population` = age_pop,
+                  `COVID-19` = covid,
+                   Health = health,
+                  `Water & Sanitation` = water),  
                 selected = "COVID-19 Cases: Confirmed"
                 )    
 
 selectInput("variable2",
                "Indicator X-axis:",
                 choices = list(
-                  `Age & Population` = sort(unique(dfm[dfm$topic == "Age & Population",]$variable)),
-                  `COVID-19` = sort(unique(dfm[dfm$topic == "COVID-19",]$variable)),
-                   Health = sort(unique(dfm[dfm$topic == "Health",]$variable)),
-                  `Water & Sanitation` = sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))),                 selected = "Hospital beds (per 1,000 people)"
+                  `Age & Population` = age_pop,
+                  `COVID-19` = covid,
+                   Health = health,
+                  `Water & Sanitation` = water),                
+            selected = "Hospital beds (per 1,000 people)"
                 ) 
 
 selectInput("size",
                "Size:",
                 choices = list(
-                  `Age & Population` = sort(unique(dfm[dfm$topic == "Age & Population",]$variable)),
-                  `COVID-19` = sort(unique(dfm[dfm$topic == "COVID-19",]$variable)),
-                   Health = sort(unique(dfm[dfm$topic == "Health",]$variable)),
-                  `Water & Sanitation` = sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))),                 selected = "Population ages 65 and above (% of total)"
+                  `Age & Population` = age_pop,
+                  `COVID-19` = covid,
+                   Health = health,
+                  `Water & Sanitation` = water),                
+            selected = "Population ages 65 and above (% of total)"
                 ) 
 
 selectizeInput("Country Name",

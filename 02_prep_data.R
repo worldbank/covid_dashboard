@@ -111,6 +111,14 @@ tmp <- treemap_dat(df = fullcd2,
                    case_type = "COVID-19 Cases: Confirmed")
 
 
+# Precompute select inputs ------------------------------------------------
+
+age_pop <- sort(unique(dfm[dfm$topic == "Age & Population",]$variable))
+covid   <- sort(unique(dfm[dfm$topic == "COVID-19",]$variable))
+health  <- sort(unique(dfm[dfm$topic == "Health",]$variable))
+water   <- sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))
+
+
 # Save data ---------------------------------------------------------------
 
 fst::write_fst(dfm, "input/prod/dfm.fst")
@@ -120,4 +128,7 @@ fst::write_fst(wld_data, "input/prod/wld_data.fst")
 fst::write_fst(indicator_list, "input/prod/indicator_list,fst")
 #fst::write_fst(tmp, "input/prod/temporary_file,fst")
 readr::write_rds(tmp, "input/prod/temporary_file,rds")
-
+readr::write_rds(age_pop, "input/prod/age_pop.RDS")
+readr::write_rds(covid, "input/prod/covid.RDS")
+readr::write_rds(health, "input/prod/health.RDS")
+readr::write_rds(water, "input/prod/water.RDS")
