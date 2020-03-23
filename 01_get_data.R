@@ -62,6 +62,11 @@ wld_data <- jsonlite::fromJSON(world_url)$data
 wld_data$iso <- "WLD"
 wld_data$name <- "World"
 wld_data <- wld_data[, c("iso", "name", "date", "confirmed", "deaths", "recovered")]
+wld_data$`COVID-19 cases: Active` <- wld_data$confirmed - wld_data$deaths - wld_data$recovered
+wld_data <- wld_data %>%
+              rename("COVID-19 cases: Confirmed" = "confirmed",
+                     "COVID-19 cases: Deaths" = "deaths",
+                     "COVID-19 cases: Recovered" = "recovered")
 
 readr::write_rds(ctry_data, "input/ctry_data.rds")
 readr::write_rds(wld_data, "input/wld_data.rds")

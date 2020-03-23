@@ -1,0 +1,8 @@
+dfm            <- fst::read_fst("input/prod/dfm.fst")
+ccc            <- fst::read_fst("input/prod/ccc.fst")
+fullcd         <- fst::read_fst("input/prod/fullcd.fst")
+fullcd2        <- fst::read_fst("input/prod/fullcd2.fst")
+wld_data       <- fst::read_fst("input/prod/wld_data.fst")
+indicator_list <- fst::read_fst("input/prod/indicator_list,fst")
+#tmp            <- fst::read_fst("input/prod/temporary_file,fst")
+tmp            <- readr::read_rds("input/prod/temporary_file,rds")
