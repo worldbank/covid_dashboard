@@ -245,7 +245,7 @@ plot_treemap <- function(input, case_type) {
    p <-  treemap(tmp,
             draw = T,
                index=c("Region", "name"),
-               vSize="new",
+               vSize="value",
                type="index",
                palette = "Set2",
                bg.labels = 150,
