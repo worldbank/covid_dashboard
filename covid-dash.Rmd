@@ -241,8 +241,7 @@ plot_treemap <- function(input, case_type) {
   tmp <- tmp[tmp$date == max(tmp$date),]
   
   
-    #  p <- d3tree3(
-   p <-  treemap(tmp,
+  p <-  treemap(tmp,
             draw = T,
                index=c("Region", "name"),
                vSize="value",
@@ -265,10 +264,8 @@ plot_treemap <- function(input, case_type) {
   
   return(p)
 }
-
-renderPlot({
-  plot_treemap2(input, "COVID-19 Cases: Confirmed")
-
+  renderPlot({
+  plot_treemap(input, "COVID-19 Cases: Confirmed")
 })
 
 # 
