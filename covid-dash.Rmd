@@ -10,6 +10,7 @@ output:
 source("styles.R")
 source("00_setup.R")
 source("03_load_data.R")
+my_date <- max(wld_data$date)
 
 ```
 
@@ -307,7 +308,7 @@ plot_treemap <- function(input, case_type) {
 ```
 
 
-### New cases confirmed on `r renderText(max(wld_data$date))`
+### New cases confirmed on `r my_date`
 
 ```{r}
 
