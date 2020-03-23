@@ -14,6 +14,8 @@ mry <- dfm %>%
     date = 2019
   )
 
+mry <- mry[mry$mry > 2009,] ## drops less than 150 obs
+
 dfm <- merge(dfm, mry, by = c("date", "iso3c", "variable"), all.x = T) %>%
   rename(varcode = variable)
 
@@ -74,8 +76,12 @@ cm <- read_excel("input/country_metadata.xlsx", sheet = "Country - Metadata") %>
 dfm <- merge(dfm, cm, by.x = "iso3c", by.y = "Code", all.x = T) %>%
   dplyr::filter(!is.na(Region))
 
-#fullcd <- merge(fullcd, cm1, by.x = "iso", by.y = "Code", all.x = T)
-#fullcd <- fullcd[fullcd$iso != "TWN",]
+dfm <- dfm[, -c(4, 9, 10, 11)]
+dfm <- dfm[!is.na(dfm$value) | !is.na(dfm$mry) | !is.na(dfm$mrv), ]
+dfm$topic<- as.character(dfm$topic)
+dfm$topic <- ifelse(dfm$variable == "COVID-19 Cases: Confirmed" | dfm$variable == "COVID-19 Cases: Active" |
+                    dfm$variable == "COVID-19 Cases: Recovered" | dfm$variable == "COVID-19 Cases: Deaths", 
+                    "COVID-19", dfm$topic)
 
 wdi <- WDI(indicator = c("SP.POP.TOTL"), start = 2018, end = 2018, extra = TRUE) %>%
   select(SP.POP.TOTL,
@@ -83,8 +89,6 @@ wdi <- WDI(indicator = c("SP.POP.TOTL"), start = 2018, end = 2018, extra = TRUE)
          longitude,
          latitude)
 
-
-#ccc <- fullcd[fullcd$variable == "confirmed",]
 ccc <- cc %>%
   filter(variable == "COVID-19 Cases: Confirmed") %>%
   merge(wdi, by.x = "iso", by.y = "iso3c", all.x = T) %>%
@@ -111,9 +115,9 @@ tmp <- treemap_dat(df = fullcd2,
 
 fst::write_fst(dfm, "input/prod/dfm.fst")
 fst::write_fst(ccc, "input/prod/ccc.fst")
-fst::write_fst(fullcd, "input/prod/fullcd.fst")
 fst::write_fst(fullcd2, "input/prod/fullcd2.fst")
 fst::write_fst(wld_data, "input/prod/wld_data.fst")
 fst::write_fst(indicator_list, "input/prod/indicator_list,fst")
 #fst::write_fst(tmp, "input/prod/temporary_file,fst")
 readr::write_rds(tmp, "input/prod/temporary_file,rds")
+
