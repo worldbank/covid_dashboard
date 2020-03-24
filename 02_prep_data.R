@@ -192,4 +192,5 @@ readr::write_rds(age_pop, "input/prod/age_pop.RDS")
 readr::write_rds(covid, "input/prod/covid.RDS")
 readr::write_rds(health, "input/prod/health.RDS")
 readr::write_rds(water, "input/prod/water.RDS")
+readr::write_rds(cg_data, "input/prod/cg_data.RDS")
 
