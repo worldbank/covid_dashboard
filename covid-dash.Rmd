@@ -12,6 +12,31 @@ source("00_setup.R")
 source("03_load_data.R")
 my_date <- max(wld_data$date)
 
+#--------- filtered cases
+covid <- grep("(Confirmed|Deaths)", covid, value = TRUE)
+
+
+#--------- new cases
+# Country level
+new_c <- fullcd2 %>%  # New cases
+  arrange(iso, variable, date)        %>% 
+  group_by(iso, variable)             %>% 
+  mutate(
+    new    = value - lag(value, 
+                         order_by = date),
+    status = gsub("COVID-19 Cases: ", "", variable)
+  )                                   %>% 
+  filter(date == max(date)) %>% 
+  ungroup()                 %>% 
+  select(iso, status, new)
+
+# world level
+new_wl <- new_c    %>% 
+  group_by(status) %>% 
+  summarise(con = sum(new))
+
+
+
 ```
 
 
@@ -77,11 +102,13 @@ renderValueBox({
 ### World, `r my_date`
 ```{r}
 renderValueBox({
-  con <- wld_data %>%
-    filter(wld_data$date == max(wld_data$date)) %>%
-    select(`COVID-19 cases: Active`)
-    con <- format(con, big.mark=",")
-    de <- paste0("Active: ", con)
+  con <- new_wl %>% 
+        filter(status == "Confirmed") %>% 
+        select(con) %>% 
+        pull() %>% 
+        format(big.mark=",")
+      
+  de <- paste0("New cases: ", con)
   valueBox(tags$p(de, style = "font-size: 80%;")
            #, 
            #icon = "fa-users"
