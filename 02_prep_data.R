@@ -58,9 +58,10 @@ full_country_data <- full_country_data %>%
     `COVID-19 Cases: Deaths (per 1,000 people)` =  (`COVID-19 Cases: Deaths`/SP.POP.TOTL)*1000
   ) 
 
+
 full_country_data <- full_country_data %>%
-  group_by(iso) %>% 
   arrange(date) %>%
+  group_by(iso) %>% 
   mutate(`COVID-19 Cases: New Confirmed cases (Daily)` = `COVID-19 Cases: Confirmed` - dplyr::lag(`COVID-19 Cases: Confirmed`, n = 1, default = NA),
          `COVID-19 Cases: New Deaths (Daily)`   = `COVID-19 Cases: Deaths`    - dplyr::lag(`COVID-19 Cases: Deaths`,    n = 1, default = NA))
 
@@ -143,7 +144,10 @@ full_country_data$x <- cos(full_country_data$latitude*pi/180)*cos(full_country_d
 full_country_data$y <- cos(full_country_data$latitude*pi/180)*sin(full_country_data$longitude*pi/180)
 full_country_data$z <- sin(full_country_data$latitude*pi/180)
 
-full_country_data <-  full_country_data %>% group_by(date) %>% 
+full_country_data <- full_country_data[!is.na(full_country_data$x),]
+
+full_country_data <-  full_country_data %>% 
+  group_by(date) %>% 
   mutate(x_newconfirmed = weighted.mean(x, `COVID-19 Cases: New Confirmed cases (Daily)`),
          y_newconfirmed = weighted.mean(y, `COVID-19 Cases: New Confirmed cases (Daily)`),
          z_newconfirmed = weighted.mean(z, `COVID-19 Cases: New Confirmed cases (Daily)`),
