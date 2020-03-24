@@ -15,7 +15,6 @@ my_date <- max(wld_data$date)
 #--------- filtered cases
 covid <- grep("(Confirmed|Deaths)", covid, value = TRUE)
 
-
 #--------- new cases
 # Country level
 new_c <- fullcd2 %>%  # New cases

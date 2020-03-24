@@ -34,19 +34,43 @@ full_country_data <- readr::read_rds("input/full_country_data.rds") %>%
   mutate(
     date                     = as.Date(date, "%Y/%m/%d"),
     confirmed                = as.numeric(confirmed),
-    recovered                = as.numeric(recovered),
-    deaths                   = as.numeric(deaths),
-    `COVID-19 Cases: Active` = confirmed - deaths - recovered
+#    recovered                = as.numeric(recovered),
+    deaths                   = as.numeric(deaths)
+#    `COVID-19 Cases: Active` = confirmed - deaths - recovered
   ) %>%
   rename("COVID-19 Cases: Confirmed" = confirmed,
-         "COVID-19 Cases: Recovered" = recovered,
+#         "COVID-19 Cases: Recovered" = recovered,
          "COVID-19 Cases: Deaths"    = deaths)
 
+# New indicators including populatio, lat, long merged with corona data
+wdi <- WDI(indicator = c("SP.POP.TOTL"), start = 2018, end = 2018, extra = TRUE) %>%
+  select(SP.POP.TOTL,
+         iso3c,
+         longitude,
+         latitude)
 
-fullcd <- melt(full_country_data, id = c("iso", "name", "date")) %>%
+full_country_data <- full_country_data %>%
+  merge(wdi, by.x = "iso", by.y = "iso3c", all.x = T) %>%
+  mutate(
+    longitude = as.numeric(as.character(longitude)),
+    latitude  = as.numeric(as.character(latitude)),
+    `COVID-19 Cases: Confirmed (per 1,000 people)` =  (`COVID-19 Cases: Confirmed`/SP.POP.TOTL)*1000,
+    `COVID-19 Cases: Deaths (per 1,000 people)` =  (`COVID-19 Cases: Deaths`/SP.POP.TOTL)*1000
+  ) 
+
+full_country_data <- full_country_data %>%
+  group_by(iso) %>% 
+  arrange(date) %>%
+  mutate(`COVID-19 Cases: New Cases (Daily)` = `COVID-19 Cases: Confirmed` - dplyr::lag(`COVID-19 Cases: Confirmed`, n = 1, default = NA),
+         `COVID-19 Cases: New Deaths (Daily)`   = `COVID-19 Cases: Deaths`    - dplyr::lag(`COVID-19 Cases: Deaths`,    n = 1, default = NA))
+
+full_country_data$`COVID-19 Cases: New Deaths (Daily)` <- ifelse(full_country_data$`COVID-19 Cases: New Deaths (Daily)`, 
+                                                                 NA, full_country_data$`COVID-19 Cases: New Deaths (Daily)`)
+
+fullcd <- melt(full_country_data, id = c("iso", "name", "date", "latitude", "longitude")) %>%
   mutate(
     value = as.numeric(value)
-  )
+  ) 
 
 cc <- fullcd %>%
   dplyr::filter(date ==  max(date)) %>%
@@ -55,7 +79,8 @@ cc <- fullcd %>%
     date2 = 2019
   )
 
-dfm <- merge(dfm, cc, by.x = c("iso3c", "variable", "date"), 
+dfm <- merge(dfm, cc[, -c(4, 5)], 
+             by.x = c("iso3c", "variable", "date"), 
              by.y = c("iso", "variable", "date2"), 
              all = T) %>%
   mutate(
@@ -79,19 +104,18 @@ dfm <- merge(dfm, cm, by.x = "iso3c", by.y = "Code", all.x = T) %>%
 dfm <- dfm[, -c(4, 9, 10, 11)]
 dfm <- dfm[!is.na(dfm$value) | !is.na(dfm$mry) | !is.na(dfm$mrv), ]
 dfm$topic<- as.character(dfm$topic)
-dfm$topic <- ifelse(dfm$variable == "COVID-19 Cases: Confirmed" | dfm$variable == "COVID-19 Cases: Active" |
-                    dfm$variable == "COVID-19 Cases: Recovered" | dfm$variable == "COVID-19 Cases: Deaths", 
+dfm$topic <- ifelse(dfm$variable == "COVID-19 Cases: Confirmed" | 
+                    dfm$variable == "COVID-19 Cases: Confirmed (per 1,000 people)" |
+                    dfm$variable == "COVID-19 Cases: Deaths (per 1,000 people)" |
+                    dfm$variable == "COVID-19 Cases: New Cases (Daily)" |
+                    dfm$variable == "COVID-19 Cases: New Deaths (Daily)" |
+#                   dfm$variable == "COVID-19 Cases: Active" |
+#                   dfm$variable == "COVID-19 Cases: Recovered" | 
+                    dfm$variable == "COVID-19 Cases: Deaths", 
                     "COVID-19", dfm$topic)
-
-wdi <- WDI(indicator = c("SP.POP.TOTL"), start = 2018, end = 2018, extra = TRUE) %>%
-  select(SP.POP.TOTL,
-         iso3c,
-         longitude,
-         latitude)
 
 ccc <- cc %>%
   filter(variable == "COVID-19 Cases: Confirmed") %>%
-  merge(wdi, by.x = "iso", by.y = "iso3c", all.x = T) %>%
   mutate(
     longitude = as.numeric(as.character(longitude)),
     latitude  = as.numeric(as.character(latitude)),
@@ -107,14 +131,17 @@ fullcd2 <- fullcd %>%
 
 fullcd2 <- fullcd2[!is.na(fullcd2$`Short Name`),]
 
+fullcd2 <- fullcd2[fullcd2$variable == "COVID-19 Cases: Confirmed" |
+                   fullcd2$variable == "COVID-19 Cases: Deaths", ]
+
 tmp <- treemap_dat(df = fullcd2,
                    case_type = "COVID-19 Cases: Confirmed")
-
 
 # Precompute select inputs ------------------------------------------------
 
 age_pop <- sort(unique(dfm[dfm$topic == "Age & Population",]$variable))
-covid   <- sort(unique(dfm[dfm$topic == "COVID-19",]$variable))
+covid   <- c("COVID-19 Cases: Confirmed", "COVID-19 Cases: Deaths")
+#covid   <- sort(unique(dfm[dfm$topic == "COVID-19",]$variable))
 health  <- sort(unique(dfm[dfm$topic == "Health",]$variable))
 water   <- sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))
 
@@ -132,3 +159,4 @@ readr::write_rds(age_pop, "input/prod/age_pop.RDS")
 readr::write_rds(covid, "input/prod/covid.RDS")
 readr::write_rds(health, "input/prod/health.RDS")
 readr::write_rds(water, "input/prod/water.RDS")
+
