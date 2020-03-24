@@ -11,6 +11,8 @@ library(Hmisc)
 library(tidyverse)
 library(leaflet)
 library(fst)
+library(zoo)
+library(curl)
 
 source("utils.R")
 
