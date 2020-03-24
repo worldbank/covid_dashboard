@@ -61,10 +61,10 @@ full_country_data <- full_country_data %>%
 full_country_data <- full_country_data %>%
   group_by(iso) %>% 
   arrange(date) %>%
-  mutate(`COVID-19 Cases: New Cases (Daily)` = `COVID-19 Cases: Confirmed` - dplyr::lag(`COVID-19 Cases: Confirmed`, n = 1, default = NA),
+  mutate(`COVID-19 Cases: New Confirmed cases (Daily)` = `COVID-19 Cases: Confirmed` - dplyr::lag(`COVID-19 Cases: Confirmed`, n = 1, default = NA),
          `COVID-19 Cases: New Deaths (Daily)`   = `COVID-19 Cases: Deaths`    - dplyr::lag(`COVID-19 Cases: Deaths`,    n = 1, default = NA))
 
-full_country_data$`COVID-19 Cases: New Deaths (Daily)` <- ifelse(full_country_data$`COVID-19 Cases: New Deaths (Daily)`, 
+full_country_data$`COVID-19 Cases: New Deaths (Daily)` <- ifelse(full_country_data$`COVID-19 Cases: New Deaths (Daily)` < 0, 
                                                                  NA, full_country_data$`COVID-19 Cases: New Deaths (Daily)`)
 
 fullcd <- melt(full_country_data, id = c("iso", "name", "date", "latitude", "longitude")) %>%
@@ -107,7 +107,7 @@ dfm$topic<- as.character(dfm$topic)
 dfm$topic <- ifelse(dfm$variable == "COVID-19 Cases: Confirmed" | 
                     dfm$variable == "COVID-19 Cases: Confirmed (per 1,000 people)" |
                     dfm$variable == "COVID-19 Cases: Deaths (per 1,000 people)" |
-                    dfm$variable == "COVID-19 Cases: New Cases (Daily)" |
+                    dfm$variable == "COVID-19 Cases: New Confirmed cases (Daily)" |
                     dfm$variable == "COVID-19 Cases: New Deaths (Daily)" |
 #                   dfm$variable == "COVID-19 Cases: Active" |
 #                   dfm$variable == "COVID-19 Cases: Recovered" | 
@@ -131,8 +131,8 @@ fullcd2 <- fullcd %>%
 
 fullcd2 <- fullcd2[!is.na(fullcd2$`Short Name`),]
 
-fullcd2 <- fullcd2[fullcd2$variable == "COVID-19 Cases: Confirmed" |
-                   fullcd2$variable == "COVID-19 Cases: Deaths", ]
+#fullcd2 <- fullcd2[fullcd2$variable == "COVID-19 Cases: Confirmed" |
+#                   fullcd2$variable == "COVID-19 Cases: Deaths", ]
 
 tmp <- treemap_dat(df = fullcd2,
                    case_type = "COVID-19 Cases: Confirmed")
@@ -140,8 +140,8 @@ tmp <- treemap_dat(df = fullcd2,
 # Precompute select inputs ------------------------------------------------
 
 age_pop <- sort(unique(dfm[dfm$topic == "Age & Population",]$variable))
-covid   <- c("COVID-19 Cases: Confirmed", "COVID-19 Cases: Deaths")
-#covid   <- sort(unique(dfm[dfm$topic == "COVID-19",]$variable))
+#covid   <- c("COVID-19 Cases: Confirmed", "COVID-19 Cases: Deaths")
+covid   <- sort(unique(dfm[dfm$topic == "COVID-19",]$variable))
 health  <- sort(unique(dfm[dfm$topic == "Health",]$variable))
 water   <- sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))
 

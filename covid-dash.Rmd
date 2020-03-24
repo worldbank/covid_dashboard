@@ -173,8 +173,10 @@ renderPlotly ({
 uiOutput("dynamic")
 
 output$dynamic <- renderUI({ 
-  if (input$variable == "COVID-19 Cases: Confirmed" | input$variable == "COVID-19 Cases: Recovered" |
-      input$variable == "COVID-19 Cases: Deaths" | input$variable == "COVID-19 Cases: Active") {
+  if (input$variable %in% covid)
+      #== "COVID-19 Cases: Confirmed" | input$variable == "COVID-19 Cases: Recovered" |
+      #input$variable == "COVID-19 Cases: Deaths" | input$variable == "COVID-19 Cases: Active"
+       {
     plotlyOutput("plot1")
   } else {
     plotlyOutput("plot2")
