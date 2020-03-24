@@ -67,7 +67,7 @@ full_country_data <- full_country_data %>%
 full_country_data$`COVID-19 Cases: New Deaths (Daily)` <- ifelse(full_country_data$`COVID-19 Cases: New Deaths (Daily)` < 0, 
                                                                  NA, full_country_data$`COVID-19 Cases: New Deaths (Daily)`)
 
-fullcd <- melt(full_country_data, id = c("iso", "name", "date", "latitude", "longitude")) %>%
+fullcd <- melt(full_country_data, id = c("iso", "name", "date", "latitude", "longitude", "SP.POP.TOTL")) %>%
   mutate(
     value = as.numeric(value)
   ) 
@@ -136,6 +136,39 @@ fullcd2 <- fullcd2[!is.na(fullcd2$`Short Name`),]
 
 tmp <- treemap_dat(df = fullcd2,
                    case_type = "COVID-19 Cases: Confirmed")
+
+# Center of gravity prep
+## Calculate center of gravity
+full_country_data$x <- cos(full_country_data$latitude*pi/180)*cos(full_country_data$longitude*pi/180)
+full_country_data$y <- cos(full_country_data$latitude*pi/180)*sin(full_country_data$longitude*pi/180)
+full_country_data$z <- sin(full_country_data$latitude*pi/180)
+
+full_country_data <-  full_country_data %>% group_by(date) %>% 
+  mutate(x_newconfirmed = weighted.mean(x, `COVID-19 Cases: New Confirmed cases (Daily)`),
+         y_newconfirmed = weighted.mean(y, `COVID-19 Cases: New Confirmed cases (Daily)`),
+         z_newconfirmed = weighted.mean(z, `COVID-19 Cases: New Confirmed cases (Daily)`),
+         x_newdeaths    = weighted.mean(x, `COVID-19 Cases: New Deaths (Daily)`),
+         y_newdeaths    = weighted.mean(y, `COVID-19 Cases: New Deaths (Daily)`),
+         z_newdeaths    = weighted.mean(z, `COVID-19 Cases: New Deaths (Daily)`),
+         total_newconfirmed = sum(`COVID-19 Cases: New Confirmed cases (Daily)`),
+         total_newdeaths    = sum(`COVID-19 Cases: New Deaths (Daily)`))
+
+full_country_data$latitude_newconfirmed  <- atan2(full_country_data$z_newconfirmed,(full_country_data$x_newconfirmed^2+full_country_data$y_newconfirmed^2)^(1/2))*180/pi
+full_country_data$latitude_newdeaths     <- atan2(full_country_data$z_newdeaths,   (full_country_data$x_newdeaths   ^2+full_country_data$y_newdeaths^2)^(1/2))*   180/pi
+full_country_data$longitude_newconfirmed <- atan2(full_country_data$y_newconfirmed, full_country_data$x_newconfirmed)*180/pi
+full_country_data$longitude_newdeaths    <- atan2(full_country_data$y_newdeaths,    full_country_data$x_newdeaths)   *180/pi
+
+# Only keeping one country, the rest is duplicate information now
+cg_data = full_country_data[full_country_data$iso=="DNK",c("date","latitude_newconfirmed" ,"latitude_newdeaths" ,
+                                                           "longitude_newconfirmed","longitude_newdeaths",
+                                                           "total_newconfirmed"    ,"total_newdeaths")]
+
+# Creating 5-day moving averages --- otherwise the plots become a bit too erratic
+cg_data$latitude_newconfirmed_rol  <- c(NA,NA,rollapply(cg_data$latitude_newconfirmed,  width = 5, mean),NA,NA)
+cg_data$longitude_newconfirmed_rol <- c(NA,NA,rollapply(cg_data$longitude_newconfirmed, width = 5, mean),NA,NA)
+cg_data$latitude_newdeaths_rol     <- c(NA,NA,rollapply(cg_data$latitude_newdeaths,     width = 5, mean),NA,NA)
+cg_data$longitude_newdeaths_rol    <- c(NA,NA,rollapply(cg_data$longitude_newdeaths,    width = 5, mean),NA,NA)
+
 
 # Precompute select inputs ------------------------------------------------
 
