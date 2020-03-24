@@ -258,21 +258,27 @@ renderPlotly({
   tmp <- tmp[tmp$date == max(tmp$date),]
   
   
-tmp <- tmp[!is.na(tmp$Region),]
+ tmp <- tmp[!is.na(tmp$Region),]
+ 
+ tmp$Region <- gsub(" ", "", tmp$Region, fixed = TRUE)
+ tmp$name <- gsub(" ", "", tmp$name, fixed = T)
+# plot_ly(tmp, 
+#   type="treemap",
+#   labels=tmp$name,
+#   parents=tmp$Region)
 
-tmp$Region <- gsub(" ", "", tmp$Region, fixed = TRUE)
-tmp$name <- gsub(" ", "", tmp$name, fixed = T)
-plot_ly(tmp, 
-  type="treemap",
-  labels=tmp$name,
-  parents=tmp$Region)
 
+labels = c("Eve", "Cain", "Seth", "Enos", "Noam", "Abel", "Awan", "Enoch", "Azura")
+parents = c("", "Eve", "Eve", "Seth", "Seth", "Eve", "Eve", "Awan", "Eve")
 
- # plot_ly(tmp,
-#  type="treemap",
-#  labels=c("Eve", "Cain", "Seth", "Enos", "Noam", "Abel", "Awan", "Enoch", "Azura"),
-#  parents=c("", "Eve", "Eve", "Seth", "Seth", "Eve", "Eve", "Awan", "Eve")
-#)
+labels = tmp$name
+parents = tmp$Region
+
+fig <- plot_ly(
+  type='treemap',
+  labels=labels,
+  parents=parents
+  )
   
 })
 
