@@ -215,37 +215,21 @@ output$plot1 <- renderPlotly({
 output$plot2 <- renderPlotly({
     
   df1 <- dfm[dfm$`Short Name` %in% input$`Country Name` & dfm$variable %in% input$variable,]
-  #df1 <- dfm[dfm$`Short Name` == "China" & dfm$variable == "Hospital beds (per 1,000 people)",]
-  
-  df1 %>%
-    mutate(date = as.numeric(date)) %>%
-    group_by(iso3c) %>%
-    arrange(date)
-  
-  df2 <- df1[!is.na(df1$value),]
-  
-    
-  dfp <- df2 %>%
-    group_by(iso3c) %>%
-    filter(date == max(date)) %>%
-    mutate(linelab = ifelse(date == max(date), `Short Name`, NA))
-  
-  p <- list(x = max(dfp$date),  y = ~dfp$value, text = ~str_wrap(dfp$linelab, 6), textposition = "top right",
-            xref = "x", yref = "y", color = dfp$iso3c,
-            showarrow = T, arrowhead = 0, ax = 30, ay = 0, arrowcolor= toRGB("grey80"),
-            font = list(size = 14)
-            )
 
-  plot_ly(df1) %>%
+  df1 <- df1 %>%
+    group_by(iso3c) %>%
+    arrange(date) %>%
+    mutate(date = as.numeric(date))
+
+  df1 %>%
+  plot_ly() %>%
   add_trace(x = ~date, y = ~value, name = ~`Short Name`, type = 'scatter', mode = 'lines',
             color = df1$iso3c) %>%
       add_trace(x = ~date, y = ~value, name = ~`Short Name`, type = 'scatter', mode = 'markers',
             color = df1$iso3c, showlegend = FALSE) %>%
-      #add_annotations(x = max(df1$date),  y = ~df1$value, text = ~df1$linelab, textposition = 'top right',
-      #         color = df1$iso3c, textfont = list(size = 16), showlegend = FALSE, showarrow = F) %>% 
-  layout(legend = list(orientation = 'h'), #annotations = p,
+  layout(legend = list(orientation = 'h'),
          xaxis = list(title = '', zeroline = FALSE, showline = FALSE, showgrid = T), 
-         yaxis = list(title = '', zeroline = FALSE, showline = FALSE, showgrid = T))
+         yaxis = list(title = str_wrap(input$variable, 40), zeroline = FALSE, showline = FALSE, showgrid = T))
 
 })
 
