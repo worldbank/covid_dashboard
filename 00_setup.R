@@ -13,6 +13,7 @@ library(leaflet)
 library(fst)
 library(zoo)
 library(curl)
+library(wbstats)
 
 source("utils.R")
 

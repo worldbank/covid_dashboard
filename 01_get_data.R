@@ -20,12 +20,16 @@ readr::write_rds(indicator_list, "input/indicator_list.rds")
 
 indicators <- as.character(indicator_list$code)
 
-refresh_wbcache()
-df <- wbgdata(
-  "all",
-  indicators,
-  year=c(1990:2019)
-)
+updated_cache <- wbcache()
+# refresh_wbcache(force = TRUE)
+df <- wb(
+  indicator = indicators,
+  startdate = 1990,
+  enddate = 2019,
+  return_wide = TRUE,
+  cache = updated_cache
+) %>%
+  select(-iso2c, -country)
 
 readr::write_rds(df, "input/wbgdata.rds")
 
