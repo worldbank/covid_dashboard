@@ -39,6 +39,9 @@ new_wl <- new_c    %>%
 ```
 
 
+WDI Data
+=====================================
+
 Sidebar { .sidebar data-width=250}
 -----------------------------------------------------------------------
 
@@ -173,8 +176,10 @@ renderPlotly ({
 uiOutput("dynamic")
 
 output$dynamic <- renderUI({ 
-  if (input$variable == "COVID-19 Cases: Confirmed" | input$variable == "COVID-19 Cases: Recovered" |
-      input$variable == "COVID-19 Cases: Deaths" | input$variable == "COVID-19 Cases: Active") {
+  if (input$variable %in% covid)
+      #== "COVID-19 Cases: Confirmed" | input$variable == "COVID-19 Cases: Recovered" |
+      #input$variable == "COVID-19 Cases: Deaths" | input$variable == "COVID-19 Cases: Active"
+       {
     plotlyOutput("plot1")
   } else {
     plotlyOutput("plot2")
@@ -214,180 +219,210 @@ output$plot2 <- renderPlotly({
 
 ```
 
-<!-- COVID-19 Cases -->
-<!-- ===================================== -->
+COVID-19 Cases
+=====================================
 
-<!-- Sidebar { .sidebar data-width=250} -->
-<!-- ----------------------------------------------------------------------- -->
+Sidebar { .sidebar data-width=250}
+-----------------------------------------------------------------------
 
-<!-- ```{r} -->
+```{r}
 
-<!-- selectInput("Country", -->
-<!--                 "Country:", -->
-<!--                 c(unique(as.character(dfm$`Short Name`))), -->
-<!--                  selected = "China") -->
+selectInput("Country",
+                "Country:",
+                c(unique(as.character(dfm$`Short Name`))),
+                 selected = "China")
 
-<!-- ``` -->
+selectInput("var",
+               "COVID Indicator:",
+                choices = covid,  
+                selected = "COVID-19 Cases: Confirmed"
+                )   
 
-<!-- Row  {data-height=130} -->
-<!-- ----------------------------------------------------------------------- -->
-<!-- ### Selected country, `r my_date` -->
-<!-- ```{r} -->
+```
 
-<!-- renderValueBox({ -->
-<!--     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Confirmed" & -->
-<!--                    fullcd2$date == max(fullcd2$date) & -->
-<!--                    fullcd2$`Short Name` == input$Country), "value"] -->
-<!--     con <- format(con, big.mark=",") -->
-<!--     de <- paste0("Confirmed: ", con) -->
-<!--   valueBox(tags$p(de, style = "font-size: 80%;"),  -->
-<!--            icon = "fa-users") -->
-<!-- }) -->
-<!-- ``` -->
+Row  {data-height=130}
+-----------------------------------------------------------------------
+### Selected country, `r my_date`
+```{r}
 
-<!-- ### Selected country, `r my_date` -->
-<!-- ```{r} -->
-<!-- renderValueBox({ -->
-<!--     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Active" & -->
-<!--                    fullcd2$date == max(fullcd2$date) & -->
-<!--                    fullcd2$`Short Name` == input$Country), "value"] -->
-<!--     con <- format(con, big.mark=",") -->
-<!--     de <- paste0("Active: ", con) -->
-<!--   valueBox(tags$p(de, style = "font-size: 80%;"),  -->
-<!--            icon = "fa-users") -->
-<!-- }) -->
-<!-- ``` -->
+renderValueBox({
+    con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Confirmed" &
+                   fullcd2$date == max(fullcd2$date) &
+                   fullcd2$`Short Name` == input$Country), "value"]
+    con <- format(con, big.mark=",")
+    de <- paste0("Confirmed: ", con)
+  valueBox(tags$p(de, style = "font-size: 80%;")
+           #,
+           #icon = "fa-users"
+           )
+})
+```
 
-<!-- ### Selected country, `r my_date` -->
-<!-- ```{r} -->
-<!-- renderValueBox({ -->
-<!--     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Deaths" & -->
-<!--                    fullcd2$date == max(fullcd2$date) & -->
-<!--                    fullcd2$`Short Name` == input$Country), "value"] -->
-<!--     con <- format(con, big.mark=",") -->
-<!--     de <- paste0("Deaths: ", con) -->
-<!--   valueBox(tags$p(de, style = "font-size: 80%;"),  -->
-<!--            icon = "fa-users") -->
-<!-- }) -->
-<!-- ``` -->
+### Selected country, `r my_date`
+```{r}
+renderValueBox({
+    con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Active" &
+                   fullcd2$date == max(fullcd2$date) &
+                   fullcd2$`Short Name` == input$Country), "value"]
+    con <- format(con, big.mark=",")
+    de <- paste0("Active: ", con)
+  valueBox(tags$p(de, style = "font-size: 80%;")
+           #,
+           #icon = "fa-users"
+           )
+})
+```
 
-<!-- Row   -->
-<!-- ----------------------------------------------------------------------- -->
-<!-- ### Cumulative confirmed cases -->
+### Selected country, `r my_date`
+```{r}
+renderValueBox({
+    con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Deaths" &
+                   fullcd2$date == max(fullcd2$date) &
+                   fullcd2$`Short Name` == input$Country), "value"]
+    con <- format(con, big.mark=",")
+    de <- paste0("Deaths: ", con)
+  valueBox(tags$p(de, style = "font-size: 80%;")
+           #,
+           #icon = "fa-users"
+           )
+})
+```
 
-<!-- ```{r} -->
-<!-- plot_treemap <- function(input, case_type) { -->
+Row
+-----------------------------------------------------------------------
+### Cumulative confirmed cases
 
-<!--   tmp <- tmp[tmp$date == max(tmp$date),] -->
+```{r}
+renderPlotly({
 
+tmp <- fullcd2[(fullcd2$variable %in% input$var),]  
+  
+tmp <- tmp[tmp$date == max(tmp$date),]
+tmp <- tmp[!is.na(tmp$Region),]
 
-<!--   p <-  treemap(tmp, -->
-<!--             draw = T, -->
-<!--                index=c("Region", "name"), -->
-<!--                vSize="value", -->
-<!--                type="index", -->
-<!--                palette = "Set2", -->
-<!--                bg.labels = 150, -->
-<!--                title = "", -->
-<!--                border.col = "white", -->
-<!--                inflate.labels=F, -->
-<!--                fontsize.labels=c(15,13), -->
-<!--                overlap.labels=0, -->
-<!--                align.labels=list( -->
-<!--                  c("left", "top"),  -->
-<!--                  c("center", "center"), -->
-<!--                border.lwds=c(1,1)  -->
-<!--                ) -->
-<!-- #    ), -->
-<!-- #    rootname = "World" -->
-<!--   ) -->
+# Compute regional aggregates
+tmp2 <- tmp %>%
+  group_by(Region) %>%
+  summarise(
+    `Short Name` = unique(Region),
+    value = sum(value)
+  ) %>%
+  mutate(
+    Region = "World"
+  ) %>%
+  ungroup()
 
-<!--   return(p) -->
-<!-- } -->
-<!--   renderPlot({ -->
-<!--   plot_treemap(input, "COVID-19 Cases: Confirmed") -->
-<!-- }) -->
+# Combine Regional aggregates with country level data
+tmp3 <- bind_rows(tmp, tmp2) %>%
+  select(Region, `Short Name`, value) %>%
+  filter(
+    Region %in% c("World", "Europe & Central Asia", "East Asia & Pacific", 
+                  "North America", "Middle East & North Africa", "Latin America & Caribbean", 
+                  "South Asia", "Sub-Saharan Africa")
+  )
+  
 
-<!-- #  -->
-<!-- # ### Bubble map -->
-<!-- # ```{r} -->
-<!-- # leaflet(ccc) %>%  -->
-<!-- #   addTiles()  %>%  -->
-<!-- #   addCircleMarkers(~longitude, ~latitude, label = ~longlab, -->
-<!-- #                    radius = ~ sqrt(mrv/10), -->
-<!-- #                    stroke = FALSE, fillOpacity = 0.5, weight = 1)  -->
-<!-- #  -->
+tmp3 %>%
+  plot_ly( 
+        type    = "treemap",
+        labels  = tmp3$`Short Name`,
+        parents = tmp3$Region,
+        values  = tmp3$value
+        )
 
-<!-- # figure( -->
-<!-- #        data = ccc, -->
-<!-- #         plot = function(cnm, style = style_atlas_open(), quality = "low") { -->
-<!-- #         breaks = c(200, 5000, 20000) -->
-<!-- #         wbg_bubble_map(cnm, wbgmaps[[quality]], style, "mrv", -->
-<!-- #         breaks, -->
-<!-- #         max_size = 2 -->
-<!-- #         ) -->
-<!-- #         }, -->
-<!-- #         aspect_ratio = 1.5 -->
-<!-- #        ) -->
-
-<!-- # renderLeaflet({ -->
-<!-- #    -->
-<!-- #   h <- reactive({ -->
-<!-- #     a <- ccc[ccc$date %in% input$date,] -->
-<!-- #   }) -->
-<!-- #    -->
-<!-- #   leaflet(h()) %>%  -->
-<!-- #     addTiles()  %>%  -->
-<!-- #     addCircleMarkers(h()$longitude, h()$latitude, label = h()$longlab, -->
-<!-- #                      radius = h()$sqrt(value/10), -->
-<!-- #                      stroke = FALSE, fillOpacity = 0.5, weight = 1)   -->
-<!-- #    -->
-<!-- # }) -->
-
-<!-- ``` -->
+})
 
 
-<!-- ### New cases confirmed on `r my_date` -->
+```
 
-<!-- ```{r} -->
 
-<!-- plot_treemap2 <- function(input, case_type) { -->
+### Countries with maximum cases confirmed by `r my_date`
 
-<!--   tmp1 <- tmp[tmp$date == max(tmp$date),] -->
-<!--   tmp2 <- tmp[tmp$date == (max(tmp$date) - 1), c(1, 5)] -->
-<!--   tmp2 <- tmp2 %>% -->
-<!--             rename("val2" = "value") -->
+```{r}
 
-<!--   tmp1 <- merge(tmp1, tmp2, by = "iso", all.x = T) -->
+renderPlotly({
+  
+  fullcd2 <- fullcd2[fullcd2$date == max(fullcd2$date),]
+  fullcd2 <- fullcd2 %>%
+          filter(variable %in% input$var) %>%
+          arrange(desc(value))  %>%
+          mutate(`Short Name` = fct_reorder(`Short Name`, desc(value)))
+  
+  fullcd2 <- fullcd2[c(1:20),]
+  
+  plot_ly(fullcd2, x = ~`Short Name`, y = ~value, type = 'bar', color = ~Region) %>% 
+              layout(xaxis = list(title = '', zeroline = FALSE, showline = FALSE, showgrid = T), 
+                     yaxis = list(title = '', zeroline = FALSE, showline = FALSE, showgrid = T))
+  
+  
+})
 
-<!--   tmp1$new <- tmp1$value - tmp1$val2 -->
 
-<!--     #  p <- d3tree3( -->
-<!--    p <-  treemap(tmp1, -->
-<!--             draw = T, -->
-<!--                index=c("Region", "name"), -->
-<!--                vSize="new", -->
-<!--                type="index", -->
-<!--                palette = "Set2", -->
-<!--                bg.labels = 150, -->
-<!--                title = "", -->
-<!--                border.col = "white", -->
-<!--                inflate.labels=F, -->
-<!--                fontsize.labels=c(15,13), -->
-<!--                overlap.labels=0, -->
-<!--                align.labels=list( -->
-<!--                  c("left", "top"),  -->
-<!--                  c("center", "center"), -->
-<!--                border.lwds=c(1,1)  -->
-<!--                ) -->
-<!-- #    ), -->
-<!-- #    rootname = "World" -->
-<!--   ) -->
+```
 
-<!--   return(p) -->
-<!-- } -->
 
-<!-- renderPlot({ -->
-<!--   plot_treemap2(input, "COVID-19 Cases: Confirmed") -->
-<!-- }) -->
-<!-- ``` -->
+Center of gravity
+=====================================
+
+Sidebar { .sidebar data-width=250}
+-----------------------------------------------------------------------
+
+```{r}
+
+ radioButtons("tab", "Type:",
+               c("COVID-19 Cases: Confirmed",
+                 "COVID-19 Cases: Deaths")
+              )
+```  
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+uiOutput("dynamic2")
+
+output$dynamic2 <- renderUI({
+  if (input$tab == "COVID-19 Cases: Confirmed")
+       {
+    plotOutput("map1")
+  } else {
+    plotOutput("map2")
+  }
+})
+
+# Loading global shapefile converted into rda
+load(file = "input/area_df.rda")
+
+# Map over daily confirmed
+output$map1 <- renderPlot({
+
+     ggplot() +
+  geom_polygon(data = area_df, 
+               aes(x = long, y = lat, group=group),
+               color = 'white',size=0.1) + 
+  theme(panel.background = element_rect(fill='white', color='white'), legend.text=element_text(size=14), legend.title=element_text(size=14)) +
+  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
+  geom_point(data = cg_data, aes(x=longitude_newconfirmed_rol, y=latitude_newconfirmed_rol, size=total_newconfirmed, color=date)) +
+  scale_colour_date(low = "#7878FF", high = "#000078")+labs(size="Daily new cases", color="Date")+
+  ggtitle("Center of Gravity of COVID-19 Cases")+theme(plot.title = element_text(hjust = 0.5,face="bold",size=20))
+   
+ }) 
+
+# Map over daily deaths
+output$map2 <- renderPlot({
+
+ggplot() +
+  geom_polygon(data = area_df,
+               aes(x = long, y = lat, group=group),
+               color = 'white',size=0.1) +
+  theme(panel.background = element_rect(fill='white', color='white'), legend.text=element_text(size=14), legend.title=element_text(size=14)) +
+  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
+  geom_point(data = cg_data, aes(x=longitude_newdeaths_rol, y=latitude_newdeaths_rol, size=total_newdeaths, color=date)) +
+  scale_colour_date(low = "#FF7878", high = "#780000")+labs(size="Daily deaths", color="Date") +
+  ggtitle("Center of Gravity of COVID-19 Deaths")+theme(plot.title = element_text(hjust = 0.5,face="bold",size=20))
+
+})
+
+```

@@ -58,16 +58,17 @@ full_country_data <- full_country_data %>%
     `COVID-19 Cases: Deaths (per 1,000 people)` =  (`COVID-19 Cases: Deaths`/SP.POP.TOTL)*1000
   ) 
 
+
 full_country_data <- full_country_data %>%
-  group_by(iso) %>% 
   arrange(date) %>%
-  mutate(`COVID-19 Cases: New Cases (Daily)` = `COVID-19 Cases: Confirmed` - dplyr::lag(`COVID-19 Cases: Confirmed`, n = 1, default = NA),
+  group_by(iso) %>% 
+  mutate(`COVID-19 Cases: New Confirmed cases (Daily)` = `COVID-19 Cases: Confirmed` - dplyr::lag(`COVID-19 Cases: Confirmed`, n = 1, default = NA),
          `COVID-19 Cases: New Deaths (Daily)`   = `COVID-19 Cases: Deaths`    - dplyr::lag(`COVID-19 Cases: Deaths`,    n = 1, default = NA))
 
-full_country_data$`COVID-19 Cases: New Deaths (Daily)` <- ifelse(full_country_data$`COVID-19 Cases: New Deaths (Daily)`, 
+full_country_data$`COVID-19 Cases: New Deaths (Daily)` <- ifelse(full_country_data$`COVID-19 Cases: New Deaths (Daily)` < 0, 
                                                                  NA, full_country_data$`COVID-19 Cases: New Deaths (Daily)`)
 
-fullcd <- melt(full_country_data, id = c("iso", "name", "date", "latitude", "longitude")) %>%
+fullcd <- melt(full_country_data, id = c("iso", "name", "date", "latitude", "longitude", "SP.POP.TOTL")) %>%
   mutate(
     value = as.numeric(value)
   ) 
@@ -107,7 +108,7 @@ dfm$topic<- as.character(dfm$topic)
 dfm$topic <- ifelse(dfm$variable == "COVID-19 Cases: Confirmed" | 
                     dfm$variable == "COVID-19 Cases: Confirmed (per 1,000 people)" |
                     dfm$variable == "COVID-19 Cases: Deaths (per 1,000 people)" |
-                    dfm$variable == "COVID-19 Cases: New Cases (Daily)" |
+                    dfm$variable == "COVID-19 Cases: New Confirmed cases (Daily)" |
                     dfm$variable == "COVID-19 Cases: New Deaths (Daily)" |
 #                   dfm$variable == "COVID-19 Cases: Active" |
 #                   dfm$variable == "COVID-19 Cases: Recovered" | 
@@ -131,17 +132,53 @@ fullcd2 <- fullcd %>%
 
 fullcd2 <- fullcd2[!is.na(fullcd2$`Short Name`),]
 
-fullcd2 <- fullcd2[fullcd2$variable == "COVID-19 Cases: Confirmed" |
-                   fullcd2$variable == "COVID-19 Cases: Deaths", ]
+#fullcd2 <- fullcd2[fullcd2$variable == "COVID-19 Cases: Confirmed" |
+#                   fullcd2$variable == "COVID-19 Cases: Deaths", ]
 
 tmp <- treemap_dat(df = fullcd2,
                    case_type = "COVID-19 Cases: Confirmed")
 
+# Center of gravity prep
+## Calculate center of gravity
+full_country_data$x <- cos(full_country_data$latitude*pi/180)*cos(full_country_data$longitude*pi/180)
+full_country_data$y <- cos(full_country_data$latitude*pi/180)*sin(full_country_data$longitude*pi/180)
+full_country_data$z <- sin(full_country_data$latitude*pi/180)
+
+full_country_data <- full_country_data[!is.na(full_country_data$x),]
+
+full_country_data <-  full_country_data %>% 
+  group_by(date) %>% 
+  mutate(x_newconfirmed = weighted.mean(x, `COVID-19 Cases: New Confirmed cases (Daily)`),
+         y_newconfirmed = weighted.mean(y, `COVID-19 Cases: New Confirmed cases (Daily)`),
+         z_newconfirmed = weighted.mean(z, `COVID-19 Cases: New Confirmed cases (Daily)`),
+         x_newdeaths    = weighted.mean(x, `COVID-19 Cases: New Deaths (Daily)`),
+         y_newdeaths    = weighted.mean(y, `COVID-19 Cases: New Deaths (Daily)`),
+         z_newdeaths    = weighted.mean(z, `COVID-19 Cases: New Deaths (Daily)`),
+         total_newconfirmed = sum(`COVID-19 Cases: New Confirmed cases (Daily)`),
+         total_newdeaths    = sum(`COVID-19 Cases: New Deaths (Daily)`))
+
+full_country_data$latitude_newconfirmed  <- atan2(full_country_data$z_newconfirmed,(full_country_data$x_newconfirmed^2+full_country_data$y_newconfirmed^2)^(1/2))*180/pi
+full_country_data$latitude_newdeaths     <- atan2(full_country_data$z_newdeaths,   (full_country_data$x_newdeaths   ^2+full_country_data$y_newdeaths^2)^(1/2))*   180/pi
+full_country_data$longitude_newconfirmed <- atan2(full_country_data$y_newconfirmed, full_country_data$x_newconfirmed)*180/pi
+full_country_data$longitude_newdeaths    <- atan2(full_country_data$y_newdeaths,    full_country_data$x_newdeaths)   *180/pi
+
+# Only keeping one country, the rest is duplicate information now
+cg_data = full_country_data[full_country_data$iso=="DNK",c("date","latitude_newconfirmed" ,"latitude_newdeaths" ,
+                                                           "longitude_newconfirmed","longitude_newdeaths",
+                                                           "total_newconfirmed"    ,"total_newdeaths")]
+
+# Creating 5-day moving averages --- otherwise the plots become a bit too erratic
+cg_data$latitude_newconfirmed_rol  <- c(NA,NA,rollapply(cg_data$latitude_newconfirmed,  width = 5, mean),NA,NA)
+cg_data$longitude_newconfirmed_rol <- c(NA,NA,rollapply(cg_data$longitude_newconfirmed, width = 5, mean),NA,NA)
+cg_data$latitude_newdeaths_rol     <- c(NA,NA,rollapply(cg_data$latitude_newdeaths,     width = 5, mean),NA,NA)
+cg_data$longitude_newdeaths_rol    <- c(NA,NA,rollapply(cg_data$longitude_newdeaths,    width = 5, mean),NA,NA)
+
+
 # Precompute select inputs ------------------------------------------------
 
 age_pop <- sort(unique(dfm[dfm$topic == "Age & Population",]$variable))
-covid   <- c("COVID-19 Cases: Confirmed", "COVID-19 Cases: Deaths")
-#covid   <- sort(unique(dfm[dfm$topic == "COVID-19",]$variable))
+#covid   <- c("COVID-19 Cases: Confirmed", "COVID-19 Cases: Deaths")
+covid   <- sort(unique(dfm[dfm$topic == "COVID-19",]$variable))
 health  <- sort(unique(dfm[dfm$topic == "Health",]$variable))
 water   <- sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))
 
@@ -159,4 +196,5 @@ readr::write_rds(age_pop, "input/prod/age_pop.RDS")
 readr::write_rds(covid, "input/prod/covid.RDS")
 readr::write_rds(health, "input/prod/health.RDS")
 readr::write_rds(water, "input/prod/water.RDS")
+readr::write_rds(cg_data, "input/prod/cg_data.RDS")
 
