@@ -302,15 +302,13 @@ tmp <- tmp[!is.na(tmp$Region),]
 
 # Compute regional aggregates
 tmp2 <- tmp %>%
-  group_by(Region) %>%
-  summarise(
-    `Short Name` = unique(Region),
-    value = sum(value)
-  ) %>%
+  select(Region) %>%
+  distinct() %>%
   mutate(
-    Region = "World"
-  ) %>%
-  ungroup()
+    `Short Name` = unique(Region),
+    Region = "World",
+    value = 0
+  )
 
 # Combine Regional aggregates with country level data
 tmp3 <- bind_rows(tmp, tmp2) %>%
