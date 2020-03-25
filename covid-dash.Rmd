@@ -36,7 +36,6 @@ new_wl <- new_c    %>%
 
 
 #--------- Color palette
-
 reg_palette <- c("#055bb3", "#fdb714", "#eb1c2d", "#872b90", "#00ab51", "#515151", "#e16a2d")
 reg_color   <- setNames(
   reg_palette,
@@ -59,6 +58,17 @@ color_map <- c(
   `Latin America & Caribbean`  = "#00ab51",
   `North America`              = "#515151",
   `East Asia & Pacific`        = "#e16a2d"
+)
+
+color_map2 <- tribble(
+  ~Region                      , ~color,
+  "South Asia"                 , "#055bb3",
+  "Sub-Saharan Africa"         , "#fdb714",
+  "Europe & Central Asia"      , "#eb1c2d",
+  "Middle East & North Africa" , "#872b90",
+  "Latin America & Caribbean"  , "#00ab51",
+  "North America"              , "#515151",
+  "East Asia & Pacific"        , "#e16a2d",
 )
 
 
@@ -282,10 +292,6 @@ output$plot1 <- renderPlotly({
       name = ~ `Short Name`, 
       type = 'scatter',
       mode = 'lines+markers'
-      # color = ~Region,
-      # colors = reg_color,
-      # opacity = opacity
-      # line = list(opacity = ~opacity)
     ) %>%
     layout(
       legend = list(orientation = 'h'),
@@ -439,16 +445,22 @@ tmp3 <- bind_rows(tmp, tmp2) %>%
     Region %in% c("World", "Europe & Central Asia", "East Asia & Pacific", 
                   "North America", "Middle East & North Africa", "Latin America & Caribbean", 
                   "South Asia", "Sub-Saharan Africa")
-  )
+  ) %>% 
+  left_join(color_map2) %>% 
+  left_join(color_map2, by = c("Short Name" = "Region")) %>% 
+  mutate(
+    color = if_else(is.na(color.x), color.y, color.x)
+  ) %>% 
+  select(-color.x, -color.y)
   
-
 tmp3 %>%
   plot_ly( 
-        type    = "treemap",
-        labels  = tmp3$`Short Name`,
-        parents = tmp3$Region,
-        values  = tmp3$value
-        )
+    type    = "treemap",
+    labels  = ~`Short Name`,
+    parents = ~Region,
+    values  = ~value,
+    marker  = list(colors = ~color)
+  ) 
 
 })
 
@@ -470,9 +482,22 @@ renderPlotly({
   
   fullcd2 <- fullcd2[c(1:20),]
   
-  plot_ly(fullcd2, x = ~`Short Name`, y = ~value, type = 'bar', color = ~Region) %>% 
-              layout(xaxis = list(title = '', zeroline = FALSE, showline = FALSE, showgrid = T), 
-                     yaxis = list(title = '', zeroline = FALSE, showline = FALSE, showgrid = T))
+  plot_ly(fullcd2, 
+          x = ~`Short Name`, 
+          y = ~value, 
+          type = 'bar', 
+          color = ~Region
+          ) %>% 
+              layout(xaxis = list(title = '', 
+                                  zeroline = FALSE, 
+                                  showline = FALSE, 
+                                  showgrid = TRUE
+                                  ), 
+                     yaxis = list(title = '', 
+                                  zeroline = FALSE, 
+                                  showline = FALSE, 
+                                  showgrid = TRUE)
+                     )
   
   
 })
