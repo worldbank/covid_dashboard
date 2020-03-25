@@ -182,15 +182,22 @@ renderPlotly ({
   
     m <- df4[df4$`Short Name` %in% input$`Country Name`,]
     a <- list(x = m$mrv2, y = m$mrv,
-    
-              text = m$`Short Name`, xref = "x", yref = "y",
-              showarrow = TRUE, arrowhead = 0, ax = 20, ay = -40, arrowcolor= toRGB("grey80"),
+              text = m$`Short Name`, 
+              xref = "x", 
+              yref = "y",
+              showarrow = TRUE, 
+              arrowhead = 0, 
+              ax = 20, 
+              ay = -40, 
+              arrowcolor= toRGB("grey80"),
               font = list(color = "dark grey", size = 14)
               )
+    
     df4 <- df4 %>% 
       mutate(
         opacity = if_else(`Short Name` %in% input$`Country Name`, 0.95, 0.3)
       )
+    
     plot_ly(data = df4) %>%
       add_trace(
         x = ~ mrv2,
@@ -207,13 +214,24 @@ renderPlotly ({
       ) %>%
     #add_annotations(text = df4$lab, textfont = list(size = 14),
     #         textposition = "top right") %>% 
-      layout(legend = list(x = 0, y = -0.2, orientation = 'h'),
+      layout(legend = list(x = 0, 
+                           y = -0.2, 
+                           orientation = 'h'
+                           ),
              annotations = a,
-             xaxis = list(zeroline = FALSE, showline = FALSE, showgrid = T, 
+             xaxis = list(zeroline = FALSE, 
+                          showline = FALSE, 
+                          showgrid = TRUE, 
                           title = str_wrap((input$variable2), 40),
-                          range = c(min(df4$variable), max(df4$variable))),
-             yaxis = list(zeroline = FALSE, showline = FALSE, showgrid = T, title = input$variable,
-                          range = c(min(df4$variable), max(df4$variable))))
+                          range = c(min(df4$variable), max(df4$variable))
+                          ),
+             yaxis = list(zeroline = FALSE, 
+                          showline = FALSE, 
+                          showgrid = TRUE, 
+                          title = input$variable,
+                          range = c(min(df4$variable), max(df4$variable))
+                          )
+             )
       })
 
 ```
@@ -225,10 +243,7 @@ renderPlotly ({
 uiOutput("dynamic")
 
 output$dynamic <- renderUI({ 
-  if (input$variable %in% covid)
-      #== "COVID-19 Cases: Confirmed" | input$variable == "COVID-19 Cases: Recovered" |
-      #input$variable == "COVID-19 Cases: Deaths" | input$variable == "COVID-19 Cases: Active"
-       {
+  if (input$variable %in% covid){
     plotlyOutput("plot1")
   } else {
     plotlyOutput("plot2")
@@ -278,13 +293,13 @@ output$plot1 <- renderPlotly({
         title = '',
         zeroline = FALSE,
         showline = FALSE,
-        showgrid = T
+        showgrid = TRUE
       ),
       yaxis = list(
         title = input$variable,
         zeroline = FALSE,
         showline = FALSE,
-        showgrid = T
+        showgrid = TRUE
       )
     )
   
@@ -292,12 +307,14 @@ output$plot1 <- renderPlotly({
 
 output$plot2 <- renderPlotly({
     
-  df1 <- dfm[dfm$`Short Name` %in% input$`Country Name` & dfm$variable %in% input$variable,]
+  df1 <- dfm[dfm$`Short Name` %in% input$`Country Name` 
+             & dfm$variable %in% input$variable,]
 
   df1 <- df1 %>%
     group_by(iso3c) %>%
     arrange(date) %>%
     mutate(date = as.numeric(date))
+  
   plot_ly(df1) %>%
     add_trace(
       x = ~ date,
@@ -308,8 +325,17 @@ output$plot2 <- renderPlotly({
       color = df1$iso3c
     ) %>%
   layout(legend = list(orientation = 'h'),
-         xaxis = list(title = '', zeroline = FALSE, showline = FALSE, showgrid = T), 
-         yaxis = list(title = str_wrap(input$variable, 40), zeroline = FALSE, showline = FALSE, showgrid = T))
+         xaxis = list(title = '', 
+                      zeroline = FALSE, 
+                      showline = FALSE, 
+                      showgrid = TRUE
+                      ), 
+         yaxis = list(title = str_wrap(input$variable, 40), 
+                      zeroline = FALSE, 
+                      showline = FALSE, 
+                      showgrid = TRUE
+                      )
+         )
 
 })
 
