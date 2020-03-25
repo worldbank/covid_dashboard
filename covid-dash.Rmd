@@ -24,7 +24,7 @@ new_c <- fullcd2 %>%  # New cases
     new    = value - lag(value, 
                          order_by = date),
     status = gsub("COVID-19 Cases: ", "", variable)
-  )                                   %>% 
+  )                         %>% 
   filter(date == max(date)) %>% 
   ungroup()                 %>% 
   select(iso, status, new)
@@ -34,6 +34,10 @@ new_wl <- new_c    %>%
   group_by(status) %>% 
   summarise(con = sum(new))
 
+
+#--------- Color palette
+
+reg_palette <- c("#055bb3", "#fdb714", "#eb1c2d", "#872b90", "#00ab51", "#515151", "#e16a2d")
 
 
 ```
@@ -155,17 +159,41 @@ renderPlotly ({
     df4 <- merge(df4, dfs, by = c("iso3c"))  
   
 
-  plot_ly(data = df4) %>%
-    add_trace(x = ~mrv2, y = ~mrv, type = 'scatter', mode = 'markers', color = ~Region, size = ~siz, 
-              opacity = ifelse(df4$`Short Name` %in% input$`Country Name`, 1, 0.7), ## opacity not working
-              hoverinfo = 'text',
-              text = ~paste(df4$`Short Name`)) %>%
-      layout(legend = list(x = 0, y = -0.2, orientation = 'h'),
-             xaxis = list(zeroline = FALSE, showline = FALSE, showgrid = T, title = input$variable2,
-                          range = c(min(df4$variable), max(df4$variable))),
-             yaxis = list(zeroline = FALSE, showline = FALSE, showgrid = T, title = input$variable,
-                          range = c(min(df4$variable), max(df4$variable))))
-      })
+    plot_ly(data = df4) %>%
+      add_trace(
+        x = ~ mrv2,
+        y = ~ mrv,
+        type = 'scatter',
+        mode = 'markers',
+        color = ~ Region,
+        size = ~ siz,
+        opacity = ifelse(df4$`Short Name` %in% input$`Country Name`, 1, 0.7),
+        ## opacity not working
+        hoverinfo = 'text',
+        text = ~ paste(df4$`Short Name`)
+      ) %>%
+      layout(
+        legend = list(
+          x = 0,
+          y = -0.2,
+          orientation = 'h'
+        ),
+        xaxis = list(
+          zeroline = FALSE,
+          showline = FALSE,
+          showgrid = T,
+          title = input$variable2,
+          range = c(min(df4$variable), max(df4$variable))
+        ),
+        yaxis = list(
+          zeroline = FALSE,
+          showline = FALSE,
+          showgrid = T,
+          title = input$variable,
+          range = c(min(df4$variable), max(df4$variable))
+        )
+      )
+})
 
 ```
 
