@@ -38,7 +38,8 @@ new_wl <- new_c    %>%
 #--------- Color palette
 
 reg_palette <- c("#055bb3", "#fdb714", "#eb1c2d", "#872b90", "#00ab51", "#515151", "#e16a2d")
-reg_color   <- factor(
+reg_color   <- setNames(
+  reg_palette,
   c(
     "South Asia",
     "Sub-Saharan Africa",
@@ -47,8 +48,7 @@ reg_color   <- factor(
     "Latin America & Caribbean",
     "North America",
     "East Asia & Pacific"
-  ),
-  labels = reg_palette
+  )
 )
 
 color_map <- c(
@@ -181,7 +181,7 @@ renderPlotly ({
   
     df4     <- merge(df2, df3, by = c("iso3c"))   
     df4     <- merge(df4, dfs, by = c("iso3c"))  
-    opacity <- if_else(df4$`Short Name` %in% input$`Country Name`, 1, 0.3)
+    opacity <- if_else(df4$`Short Name` %in% input$`Country Name`, 0.9, 0.4)
   
 
     plot_ly(data = df4) %>%
@@ -190,13 +190,11 @@ renderPlotly ({
         y = ~ mrv,
         type = 'scatter',
         mode = 'markers',
-        # color = ~ Region,
-        marker = list(color = color_map[df4$Region],
-                      line  = list(color = color_map[df4$Region]),
-                      size  = 10,
+        color = ~Region,
+        colors = reg_color,
+        marker = list(size  = 10,
                       opacity = opacity),
         size = ~ siz,
-        # opacity = opacity,
         hoverinfo = 'text',
         text = ~ paste(df4$`Short Name`)
       ) %>%
@@ -244,27 +242,40 @@ output$dynamic <- renderUI({
 
 output$plot1 <- renderPlotly({
   
-  dft <- fullcd2[fullcd2$`Short Name` %in% input$`Country Name` & fullcd2$variable %in% input$variable,]  
-
-  dft %>%
-    arrange(date) %>%
-    plot_ly() %>%
+  dft <- fullcd2[fullcd2$`Short Name` %in% input$`Country Name`
+                 & fullcd2$variable %in% input$variable,]
+  
+  dft <- dft    %>%
+  arrange(date) %>% 
+    group_by(Region) %>% 
+    mutate(
+      op = match(name, unique(name)), 
+      opacity = (1-(op/max(op))+1/max(op))
+    ) %>% 
+    ungroup()
+  
+  op <- dft %>% 
+    group_by(`Short Name`) %>% 
+    summarise(opacity = mean(opacity))
+  
+  opacity  <- setNames(
+    op$opacity,
+    op$`Short Name`
+  )
+  rm(op)
+  
+  
+  plot_ly(data = dft,
+          x = ~date,
+          y = ~ value ) %>%
     add_trace(
-      x = ~ date,
-      y = ~ value,
-      name = ~ `Short Name`,
+      name = ~ `Short Name`, 
       type = 'scatter',
-      mode = 'lines',
-      color = ~ `Short Name`
-    ) %>%
-    add_trace(
-      x = ~ date,
-      y = ~ value,
-      name = ~ `Short Name`,
-      type = 'scatter',
-      mode = 'markers',
-      color = ~ `Short Name`,
-      showlegend = FALSE
+      mode = 'lines+markers',
+      color = ~Region,
+      colors = reg_color,
+      opacity = opacity
+      # line = list(opacity = ~opacity)
     ) %>%
     layout(
       legend = list(orientation = 'h'),
