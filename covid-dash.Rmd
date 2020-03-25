@@ -181,8 +181,10 @@ renderPlotly ({
   
     df4     <- merge(df2, df3, by = c("iso3c"))   
     df4     <- merge(df4, dfs, by = c("iso3c"))  
-    opacity <- if_else(df4$`Short Name` %in% input$`Country Name`, 0.9, 0.4)
-  
+    df4 <- df4 %>% 
+      mutate(
+        opacity = if_else(`Short Name` %in% input$`Country Name`, 0.95, 0.3)
+      )
 
     plot_ly(data = df4) %>%
       add_trace(
@@ -192,9 +194,9 @@ renderPlotly ({
         mode = 'markers',
         color = ~Region,
         colors = reg_color,
-        marker = list(size  = 10,
-                      opacity = opacity),
-        size = ~ siz,
+        opacity = ~opacity,
+        size   = ~siz,
+        sizes  = c(20, 100),
         hoverinfo = 'text',
         text = ~ paste(df4$`Short Name`)
       ) %>%
@@ -271,10 +273,10 @@ output$plot1 <- renderPlotly({
     add_trace(
       name = ~ `Short Name`, 
       type = 'scatter',
-      mode = 'lines+markers',
-      color = ~Region,
-      colors = reg_color,
-      opacity = opacity
+      mode = 'lines+markers'
+      # color = ~Region,
+      # colors = reg_color,
+      # opacity = opacity
       # line = list(opacity = ~opacity)
     ) %>%
     layout(
