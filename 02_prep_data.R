@@ -78,7 +78,7 @@ fullcd <- melt(fcd, id = c("iso", "name", "date", "latitude", "longitude", "SP.P
   ) 
 
 cc <- fullcd %>%
-  dplyr::filter(date ==  max(date)) %>%
+  filter(date ==  max(date)) %>%
   rename(mrv = value) %>%
   mutate(
     date2 = 2019
@@ -114,8 +114,6 @@ dfm$topic <- ifelse(dfm$variable == "COVID-19 Cases: Confirmed" |
                     dfm$variable == "COVID-19 Cases: Deaths (per 1,000 people)" |
                     dfm$variable == "COVID-19 Cases: New Confirmed cases (Daily)" |
                     dfm$variable == "COVID-19 Cases: New Deaths (Daily)" |
-#                   dfm$variable == "COVID-19 Cases: Active" |
-#                   dfm$variable == "COVID-19 Cases: Recovered" | 
                     dfm$variable == "COVID-19 Cases: Deaths", 
                     "COVID-19", dfm$topic)
 
@@ -136,8 +134,6 @@ fullcd2 <- fullcd %>%
 
 fullcd2 <- fullcd2[!is.na(fullcd2$`Short Name`),]
 
-#fullcd2 <- fullcd2[fullcd2$variable == "COVID-19 Cases: Confirmed" |
-#                   fullcd2$variable == "COVID-19 Cases: Deaths", ]
 
 tmp <- treemap_dat(df = fullcd2,
                    case_type = "COVID-19 Cases: Confirmed")
@@ -161,21 +157,45 @@ fcd <-  fcd %>%
          total_newconfirmed = sum(`COVID-19 Cases: New Confirmed cases (Daily)`),
          total_newdeaths    = sum(`COVID-19 Cases: New Deaths (Daily)`))
 
-fcd$latitude_newconfirmed  <- atan2(fcd$z_newconfirmed,(fcd$x_newconfirmed^2+fcd$y_newconfirmed^2)^(1/2))*180/pi
-fcd$latitude_newdeaths     <- atan2(fcd$z_newdeaths,   (fcd$x_newdeaths   ^2+fcd$y_newdeaths^2)^(1/2))*   180/pi
+fcd$latitude_newconfirmed  <- 
+  atan2(fcd$z_newconfirmed,(fcd$x_newconfirmed^2+fcd$y_newconfirmed^2)^(1/2))*180/pi
+
+fcd$latitude_newdeaths     <- 
+  atan2(fcd$z_newdeaths, (fcd$x_newdeaths^2+fcd$y_newdeaths^2)^(1/2))*180/pi
+
 fcd$longitude_newconfirmed <- atan2(fcd$y_newconfirmed, fcd$x_newconfirmed)*180/pi
 fcd$longitude_newdeaths    <- atan2(fcd$y_newdeaths,    fcd$x_newdeaths)   *180/pi
 
 # Only keeping one country, the rest is duplicate information now
-cg_data = fcd[fcd$iso=="DNK",c("date","latitude_newconfirmed" ,"latitude_newdeaths" ,
-                                                           "longitude_newconfirmed","longitude_newdeaths",
-                                                           "total_newconfirmed"    ,"total_newdeaths")]
+cg_data = fcd[fcd$iso=="DNK",c("date",
+                               "latitude_newconfirmed",
+                               "latitude_newdeaths" ,
+                               "longitude_newconfirmed",
+                               "longitude_newdeaths",
+                               "total_newconfirmed",
+                               "total_newdeaths")]
 
 # Creating 5-day moving averages --- otherwise the plots become a bit too erratic
-cg_data$latitude_newconfirmed_rol  <- c(NA,NA,rollapply(cg_data$latitude_newconfirmed,  width = 5, mean),NA,NA)
-cg_data$longitude_newconfirmed_rol <- c(NA,NA,rollapply(cg_data$longitude_newconfirmed, width = 5, mean),NA,NA)
-cg_data$latitude_newdeaths_rol     <- c(NA,NA,rollapply(cg_data$latitude_newdeaths,     width = 5, mean),NA,NA)
-cg_data$longitude_newdeaths_rol    <- c(NA,NA,rollapply(cg_data$longitude_newdeaths,    width = 5, mean),NA,NA)
+cg_data$latitude_newconfirmed_rol  <- c(NA,NA,rollapply(cg_data$latitude_newconfirmed,  
+                                                        width = 5, 
+                                                        mean
+                                                        ),
+                                        NA,NA)
+cg_data$longitude_newconfirmed_rol <- c(NA,NA,rollapply(cg_data$longitude_newconfirmed, 
+                                                        width = 5, 
+                                                        mean
+                                                        ),
+                                        NA,NA)
+cg_data$latitude_newdeaths_rol     <- c(NA,NA,rollapply(cg_data$latitude_newdeaths,
+                                                        width = 5, 
+                                                        mean
+                                                        ),
+                                        NA,NA)
+cg_data$longitude_newdeaths_rol    <- c(NA,NA,rollapply(cg_data$longitude_newdeaths,
+                                                        width = 5, 
+                                                        mean
+                                                        ),
+                                        NA,NA)
 
 
 # Precompute select inputs ------------------------------------------------
