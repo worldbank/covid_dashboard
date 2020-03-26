@@ -15,6 +15,18 @@ today <- my_date
 #--------- filtered cases
 covid <- grep("(Confirmed|Deaths)", covid, value = TRUE)
 
+
+#------country palette
+#This has to be done here and not in utils because Ineed the `fullcd2` dataframe
+
+uniq_cty <- unique(fullcd2$`Short Name`)
+
+cty_color <-  setNames(
+  rep(palette, ceil(length(uniq_cty)/length(palette)))[1:length(uniq_cty)],
+  uniq_cty
+)
+
+
 ```
 
 
@@ -158,7 +170,7 @@ renderPlotly ({
         mode = 'markers',
         color = ~Region,
         colors = reg_color,
-        opacity = ~opacity,
+        opacity = 0.9,
         size   = ~siz,
         sizes  = c(20, 100),
         hoverinfo = 'text',
@@ -207,33 +219,41 @@ output$plot1 <- renderPlotly({
   dft <- fullcd2[fullcd2$`Short Name` %in% input$`Country Name`
                  & fullcd2$variable %in% input$variable,]
   
-  dft <- dft    %>%
+dft <- dft    %>%
   arrange(date) %>% 
-    group_by(Region) %>% 
-    mutate(
-      op = match(name, unique(name)), 
-      opacity = (1-(op/max(op))+1/max(op))
-    ) %>% 
-    ungroup()
-  
-  op <- dft %>% 
-    group_by(`Short Name`) %>% 
-    summarise(opacity = mean(opacity))
-  
-  opacity  <- setNames(
-    op$opacity,
-    op$`Short Name`
+  group_by(Region) %>% 
+  mutate(
+    op = match(name, unique(name)), 
+    opacity = (1-(op/max(op))+1/max(op)),
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    colors = rep(palette, ceil(nrow(.)/length(palette)))[1:nrow(.)]
   )
-  rm(op)
+
+  
+  
+  
+  # op <- dft %>% 
+  #   group_by(`Short Name`) %>% 
+  #   summarise(opacity = mean(opacity))
+  # 
+  # opacity  <- setNames(
+  #   op$opacity,
+  #   op$`Short Name`
+  # )
+  # rm(op)
   
   
   plot_ly(data = dft,
           x = ~date,
           y = ~ value ) %>%
     add_trace(
-      name = ~ `Short Name`, 
-      type = 'scatter',
-      mode = 'lines+markers'
+      name  = ~ `Short Name`, 
+      type  = 'scatter',
+      mode  = 'lines+markers', 
+      color = ~`Short Name`,
+      colors = cty_color
     ) %>%
     layout(
       legend = list(orientation = 'h'),
@@ -261,7 +281,12 @@ output$plot2 <- renderPlotly({
   df1 <- df1 %>%
     group_by(iso3c) %>%
     arrange(date) %>%
-    mutate(date = as.numeric(date))
+    mutate(date = as.numeric(date)) %>% 
+    ungroup() %>% 
+    mutate(
+      colors = rep(palette, ceil(nrow(.)/length(palette)))[1:nrow(.)]
+    )
+
   
   plot_ly(df1) %>%
     add_trace(
@@ -269,8 +294,9 @@ output$plot2 <- renderPlotly({
       y = ~ value,
       name = ~ `Short Name`,
       type = 'scatter',
-      mode = 'lines',
-      color = df1$iso3c
+      mode = 'lines+markers',
+      color = ~`Short Name`,
+      colors = cty_color
     ) %>%
   layout(legend = list(orientation = 'h'),
          xaxis = list(title = '', 
