@@ -185,23 +185,63 @@ water   <- sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))
 
 
 # Pre-compute new cases ---------------------------------------------------
-# Country level
-new_c <- fullcd2 %>%  # New cases
+
+# changes over time
+cov_ch <- fullcd2 %>%  # COVID changes
   arrange(iso, variable, date)        %>% 
   group_by(iso, variable)             %>% 
   mutate(
-    new    = value - lag(value, 
-                         order_by = date),
-    status = gsub("COVID-19 Cases: ", "", variable)
+    value_lag = lag(value),             # it is already sorted
+    gr_abs    = value  - value_lag,     # Absolute change (new cases)
+    gr_per    = gr_abs/value_lag,       # Percentage change 
+    gr_per2   = (gr_per/lag(gr_per))-1, # Speed of change
+    status    = gsub("COVID-19 Cases: ", "", variable)
   )                         %>% 
+  ungroup() %>% 
+  select(-latitude, -longitude)
+
+# Country level
+new_c <- cov_ch %>%  # New cases
+  group_by(iso, variable)             %>% 
   filter(date == max(date)) %>% 
   ungroup()                 %>% 
-  select(iso, status, new)
+  select(Region, `Short Name`, status, gr_abs, gr_per, gr_per2)
+
+# Regional level
+new_rg <- new_c %>% 
+  group_by(Region, status) %>% 
+  summarise(
+    gr_abs  = sum(gr_abs), 
+    gr_per  = mean(gr_per), 
+    gr_per2 = mean(gr_per2)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    `Short Name` = Region   # to append 
+  )
+  
 
 # world level
 new_wl <- new_c    %>% 
   group_by(status) %>% 
-  summarise(con = sum(new))
+  summarise(
+    gr_abs  = sum(gr_abs), 
+    gr_per  = mean(gr_per), 
+    gr_per2 = mean(gr_per2)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    `Short Name` = "World"   # to append 
+  )
+
+new_all <- new_c %>% 
+  bind_rows(new_rg, new_wl) %>% 
+  mutate(
+    Region = if_else(Region == `Short Name`, 
+                     "World", Region)
+  )
+
+
 
 # Save data ---------------------------------------------------------------
 
@@ -212,6 +252,8 @@ fst::write_fst(wld_data, "input/prod/wld_data.fst")
 fst::write_fst(indicator_list, "input/prod/indicator_list,fst")
 fst::write_fst(new_c, "input/prod/new_c.fst")
 fst::write_fst(new_wl, "input/prod/new_wl.fst")
+fst::write_fst(new_rg, "input/prod/new_rg.fst")
+fst::write_fst(new_all, "input/prod/new_all.fst")
 #fst::write_fst(tmp, "input/prod/temporary_file,fst")
 readr::write_rds(tmp, "input/prod/temporary_file,rds")
 readr::write_rds(age_pop, "input/prod/age_pop.RDS")
