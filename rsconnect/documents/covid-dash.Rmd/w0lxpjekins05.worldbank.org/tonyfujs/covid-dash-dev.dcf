@@ -5,8 +5,8 @@ account: tonyfujs
 server: w0lxpjekins05.worldbank.org
 hostUrl: http://w0lxpjekins05.worldbank.org:3939/__api__
 appId: 508
-bundleId: 2307
-url: http://w0lxpjekins05.worldbank.org:3939/content/508/
-when: 1585079481.63168
+bundleId: 2311
+url: http://w0lxpjekins05.worldbank.org:3939/covid-dashboard-dev/
+when: 1585243736.06185
 asMultiple: FALSE
 asStatic: FALSE
