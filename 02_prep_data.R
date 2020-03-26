@@ -183,6 +183,26 @@ health  <- sort(unique(dfm[dfm$topic == "Health",]$variable))
 water   <- sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))
 
 
+
+# Pre-compute new cases ---------------------------------------------------
+# Country level
+new_c <- fullcd2 %>%  # New cases
+  arrange(iso, variable, date)        %>% 
+  group_by(iso, variable)             %>% 
+  mutate(
+    new    = value - lag(value, 
+                         order_by = date),
+    status = gsub("COVID-19 Cases: ", "", variable)
+  )                         %>% 
+  filter(date == max(date)) %>% 
+  ungroup()                 %>% 
+  select(iso, status, new)
+
+# world level
+new_wl <- new_c    %>% 
+  group_by(status) %>% 
+  summarise(con = sum(new))
+
 # Save data ---------------------------------------------------------------
 
 fst::write_fst(dfm, "input/prod/dfm.fst")
@@ -190,6 +210,8 @@ fst::write_fst(ccc, "input/prod/ccc.fst")
 fst::write_fst(fullcd2, "input/prod/fullcd2.fst")
 fst::write_fst(wld_data, "input/prod/wld_data.fst")
 fst::write_fst(indicator_list, "input/prod/indicator_list,fst")
+fst::write_fst(new_c, "input/prod/new_c.fst")
+fst::write_fst(new_wl, "input/prod/new_wl.fst")
 #fst::write_fst(tmp, "input/prod/temporary_file,fst")
 readr::write_rds(tmp, "input/prod/temporary_file,rds")
 readr::write_rds(age_pop, "input/prod/age_pop.RDS")
