@@ -5,18 +5,16 @@ dfm <-  readr::read_rds("input/wbgdata.rds") %>%
   melt(id = c("iso3c", "date"))
 
 mry <- dfm %>%
-  dplyr::filter(!is.na(value)) %>%
   group_by(iso3c, variable) %>% # filter to max year, each indicator, each country
-  dplyr::filter(date == max(date)) %>%
-  rename(mrv = value,
-         mry = date) %>%
-  mutate(
-    date = 2019
-  )
+  filter(!is.na(value),
+         date == max(date)) %>%
+  mutate(mrv = value,
+         mry = date,
+         date = "2019") %>% 
+  filter(mry > 2009)
 
-mry <- mry[mry$mry > 2009,] ## drops less than 150 obs
-
-dfm <- merge(dfm, mry, by = c("date", "iso3c", "variable"), all.x = T) %>%
+dfm <- dfm %>% 
+  left_join(mry, by = c("date", "iso3c", "variable")) %>%
   rename(varcode = variable)
 
 # merging indicator metadata
@@ -30,26 +28,26 @@ dfm <- merge(dfm, indicator_list, by.x = "varcode", by.y = "code", all.x = T)
 wld_data <- readr::read_rds("input/wld_data.rds")
 
 # get country list
-full_country_data <- readr::read_rds("input/full_country_data.rds") %>%
+fcd <- readr::read_rds("input/full_country_data.rds") %>%
   mutate(
-    date                     = as.Date(date, "%Y/%m/%d"),
-    confirmed                = as.numeric(confirmed),
-#    recovered                = as.numeric(recovered),
-    deaths                   = as.numeric(deaths)
-#    `COVID-19 Cases: Active` = confirmed - deaths - recovered
+    date      = as.Date(date, "%Y/%m/%d"),
+    confirmed = as.numeric(confirmed),
+    deaths    = as.numeric(deaths)
   ) %>%
   rename("COVID-19 Cases: Confirmed" = confirmed,
-#         "COVID-19 Cases: Recovered" = recovered,
          "COVID-19 Cases: Deaths"    = deaths)
 
 # New indicators including populatio, lat, long merged with corona data
-wdi <- WDI(indicator = c("SP.POP.TOTL"), start = 2018, end = 2018, extra = TRUE) %>%
+wdi <- WDI(indicator = c("SP.POP.TOTL"), 
+           start = 2018, 
+           end = 2018, 
+           extra = TRUE) %>%
   select(SP.POP.TOTL,
          iso3c,
          longitude,
          latitude)
 
-full_country_data <- full_country_data %>%
+fcd <- fcd %>%
   merge(wdi, by.x = "iso", by.y = "iso3c", all.x = T) %>%
   mutate(
     longitude = as.numeric(as.character(longitude)),
@@ -59,16 +57,22 @@ full_country_data <- full_country_data %>%
   ) 
 
 
-full_country_data <- full_country_data %>%
+fcd <- fcd %>%
   arrange(date) %>%
   group_by(iso) %>% 
-  mutate(`COVID-19 Cases: New Confirmed cases (Daily)` = `COVID-19 Cases: Confirmed` - dplyr::lag(`COVID-19 Cases: Confirmed`, n = 1, default = NA),
-         `COVID-19 Cases: New Deaths (Daily)`   = `COVID-19 Cases: Deaths`    - dplyr::lag(`COVID-19 Cases: Deaths`,    n = 1, default = NA))
+  mutate(
+    `COVID-19 Cases: New Confirmed cases (Daily)` = 
+     `COVID-19 Cases: Confirmed` - lag(`COVID-19 Cases: Confirmed`, n = 1, default = NA),
+         
+    `COVID-19 Cases: New Deaths (Daily)` = 
+     `COVID-19 Cases: Deaths` - lag(`COVID-19 Cases: Deaths`, n = 1, default = NA),
+         
+    `COVID-19 Cases: New Deaths (Daily)` =
+     if_else(`COVID-19 Cases: New Deaths (Daily)` < 0, 
+            NA_real_, `COVID-19 Cases: New Deaths (Daily)`) 
+    )
 
-full_country_data$`COVID-19 Cases: New Deaths (Daily)` <- ifelse(full_country_data$`COVID-19 Cases: New Deaths (Daily)` < 0, 
-                                                                 NA, full_country_data$`COVID-19 Cases: New Deaths (Daily)`)
-
-fullcd <- melt(full_country_data, id = c("iso", "name", "date", "latitude", "longitude", "SP.POP.TOTL")) %>%
+fullcd <- melt(fcd, id = c("iso", "name", "date", "latitude", "longitude", "SP.POP.TOTL")) %>%
   mutate(
     value = as.numeric(value)
   ) 
@@ -140,13 +144,13 @@ tmp <- treemap_dat(df = fullcd2,
 
 # Center of gravity prep
 ## Calculate center of gravity
-full_country_data$x <- cos(full_country_data$latitude*pi/180)*cos(full_country_data$longitude*pi/180)
-full_country_data$y <- cos(full_country_data$latitude*pi/180)*sin(full_country_data$longitude*pi/180)
-full_country_data$z <- sin(full_country_data$latitude*pi/180)
+fcd$x <- cos(fcd$latitude*pi/180)*cos(fcd$longitude*pi/180)
+fcd$y <- cos(fcd$latitude*pi/180)*sin(fcd$longitude*pi/180)
+fcd$z <- sin(fcd$latitude*pi/180)
 
-full_country_data <- full_country_data[!is.na(full_country_data$x),]
+fcd <- fcd[!is.na(fcd$x),]
 
-full_country_data <-  full_country_data %>% 
+fcd <-  fcd %>% 
   group_by(date) %>% 
   mutate(x_newconfirmed = weighted.mean(x, `COVID-19 Cases: New Confirmed cases (Daily)`),
          y_newconfirmed = weighted.mean(y, `COVID-19 Cases: New Confirmed cases (Daily)`),
@@ -157,13 +161,13 @@ full_country_data <-  full_country_data %>%
          total_newconfirmed = sum(`COVID-19 Cases: New Confirmed cases (Daily)`),
          total_newdeaths    = sum(`COVID-19 Cases: New Deaths (Daily)`))
 
-full_country_data$latitude_newconfirmed  <- atan2(full_country_data$z_newconfirmed,(full_country_data$x_newconfirmed^2+full_country_data$y_newconfirmed^2)^(1/2))*180/pi
-full_country_data$latitude_newdeaths     <- atan2(full_country_data$z_newdeaths,   (full_country_data$x_newdeaths   ^2+full_country_data$y_newdeaths^2)^(1/2))*   180/pi
-full_country_data$longitude_newconfirmed <- atan2(full_country_data$y_newconfirmed, full_country_data$x_newconfirmed)*180/pi
-full_country_data$longitude_newdeaths    <- atan2(full_country_data$y_newdeaths,    full_country_data$x_newdeaths)   *180/pi
+fcd$latitude_newconfirmed  <- atan2(fcd$z_newconfirmed,(fcd$x_newconfirmed^2+fcd$y_newconfirmed^2)^(1/2))*180/pi
+fcd$latitude_newdeaths     <- atan2(fcd$z_newdeaths,   (fcd$x_newdeaths   ^2+fcd$y_newdeaths^2)^(1/2))*   180/pi
+fcd$longitude_newconfirmed <- atan2(fcd$y_newconfirmed, fcd$x_newconfirmed)*180/pi
+fcd$longitude_newdeaths    <- atan2(fcd$y_newdeaths,    fcd$x_newdeaths)   *180/pi
 
 # Only keeping one country, the rest is duplicate information now
-cg_data = full_country_data[full_country_data$iso=="DNK",c("date","latitude_newconfirmed" ,"latitude_newdeaths" ,
+cg_data = fcd[fcd$iso=="DNK",c("date","latitude_newconfirmed" ,"latitude_newdeaths" ,
                                                            "longitude_newconfirmed","longitude_newdeaths",
                                                            "total_newconfirmed"    ,"total_newdeaths")]
 
