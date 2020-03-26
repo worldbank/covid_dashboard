@@ -85,8 +85,8 @@ renderValueBox({
     filter(wld_data$date == max(wld_data$date)) %>%
     select(`COVID-19 cases: Confirmed`)
   con <- format(con, big.mark=",")
-  de <- paste0("Total cases: ", con)
-  valueBox(tags$p(de, style = "font-size: 70%;")
+  de <- HTML(paste0("Total cases:<br/>", con))
+  valueBox(tags$p(de, style = "font-size: 80%;")
            #, 
            #icon = "fa-users"
   )
@@ -102,8 +102,9 @@ renderValueBox({
     pull() %>% 
     format(big.mark=",")
   
-  de <- paste0("New cases (", my_date2, "): ", con)
-  valueBox(tags$p(de, style = "font-size: 70%;")
+  de <- HTML(paste0("New cases (", my_date2, "):<br/>", con))
+  #de <- str_wrap(de, 15)
+  valueBox(tags$p(de, style = "font-size: 80%;")
            #, 
            #icon = "fa-users"
   )
@@ -117,8 +118,8 @@ renderValueBox({
     filter(wld_data$date == max(wld_data$date)) %>%
     select(`COVID-19 cases: Deaths`)
   con <- format(con, big.mark=",")
-  de <- paste0("Total deaths: ", con)
-  valueBox(tags$p(de, style = "font-size: 70%;")
+  de <- HTML(paste0("Total deaths:<br/>", con))
+  valueBox(tags$p(de, style = "font-size: 80%;")
            #, 
            #icon = "fa-users"
   )
