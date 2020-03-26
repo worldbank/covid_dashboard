@@ -5,61 +5,61 @@ output:
   flexdashboard::flex_dashboard:
     orientation: rows
 ---
-
+  
 ```{r setup, include=FALSE}
 source("styles.R")
 source("00_setup.R")
 source("03_load_data.R")
 my_date <- max(wld_data$date)
-today <- my_date
+today <- as.Date(my_date) + 1
+
 #--------- filtered cases
 covid <- grep("(Confirmed|Deaths)", covid, value = TRUE)
 
 ```
 
 
-WDI Data
+Indicators
 =====================================
-
+  
 Sidebar { .sidebar data-width=250}
 -----------------------------------------------------------------------
 Last Updated on: `r today`
 
 ```{r}
 
-
 selectInput("variable",
-               "Indicator Y-axis:",
-                choices = list(
-                  `Age & Population` = age_pop,
-                  `COVID-19` = covid,
-                   Health = health,
-                  `Water & Sanitation` = water),  
-                selected = "Hospital beds (per 1,000 people)"
-                )    
+            "Indicator Y-axis:",
+            choices = list(
+              `Age & Population` = age_pop,
+              `COVID-19` = covid,
+              Health = health,
+              `Water & Sanitation` = water),  
+            selected = "Hospital beds (per 1,000 people)"
+)    
 
 selectInput("variable2",
-               "Indicator X-axis:",
-                choices = list(
-                  `Age & Population` = age_pop,
-                  `COVID-19` = covid,
-                   Health = health,
-                  `Water & Sanitation` = water),                
+            "Indicator X-axis:",
+            choices = list(
+              `Age & Population` = age_pop,
+              `COVID-19` = covid,
+              Health = health,
+              `Water & Sanitation` = water),                
             selected = "Population ages 65 and above (% of total)"
-                ) 
+) 
 
 selectInput("size",
-               "Bubble size:",
-                choices = covid,                
+            "Bubble size:",
+            choices = covid,                
             selected = "COVID-19 Cases: Deaths"
-                ) 
+) 
 
 selectizeInput("Country Name",
-                "Country (compare countries over time):",
-                c(unique(as.character(dfm$`Short Name`))),
-                multiple = TRUE, 
+               "Country (compare countries over time):",
+               c(unique(as.character(dfm$`Short Name`))),
+               multiple = TRUE, 
                selected = c("China", "Italy", "United States", "Spain", "Iran")
-               )
+)
 ```
 
 Row  {data-height=130}
@@ -70,12 +70,12 @@ renderValueBox({
   con <- wld_data %>%
     filter(wld_data$date == max(wld_data$date)) %>%
     select(`COVID-19 cases: Confirmed`)
-    con <- format(con, big.mark=",")
-    de <- paste0("Confirmed: ", con)
+  con <- format(con, big.mark=",")
+  de <- paste0("Confirmed: ", con)
   valueBox(tags$p(de, style = "font-size: 80%;")
            #, 
            #icon = "fa-users"
-           )
+  )
 })
 ```
 
@@ -83,16 +83,16 @@ renderValueBox({
 ```{r}
 renderValueBox({
   con <- new_wl %>% 
-        filter(status == "Confirmed") %>% 
-        select(con) %>% 
-        pull() %>% 
-        format(big.mark=",")
-      
+    filter(status == "Confirmed") %>% 
+    select(con) %>% 
+    pull() %>% 
+    format(big.mark=",")
+  
   de <- paste0("New cases: ", con)
   valueBox(tags$p(de, style = "font-size: 80%;")
            #, 
            #icon = "fa-users"
-           )
+  )
 })
 ```
 
@@ -107,84 +107,87 @@ renderValueBox({
   valueBox(tags$p(de, style = "font-size: 80%;")
            #, 
            #icon = "fa-users"
-           )
+  )
 })
 ```
 
 Row  {data-height=500}
 -----------------------------------------------------------------------
-
+  
 ### Explore relationships
 ```{r}
 renderPlotly ({
-
+  
   df2 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable, ]
   df3 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable2, c(1, 6)]
   dfs <- dfm[dfm$date == 2019 & dfm$variable %in% input$size, c(1, 6)]
-   
-    dfs <- dfs %>%
-          rename("siz" = "mrv")
-
-     
-    df3 <- df3 %>%
-          rename("mrv2" = "mrv")
   
-    df4 <- merge(df2, df3, by = c("iso3c"))   
-    df4 <- merge(df4, dfs, by = c("iso3c"))  
+  dfs <- dfs %>%
+    rename("siz" = "mrv")
   
-    m <- df4[df4$`Short Name` %in% input$`Country Name`,]
-    a <- list(x = m$mrv2, y = m$mrv,
-              text = m$`Short Name`, 
-              xref = "x", 
-              yref = "y",
-              showarrow = TRUE, 
-              arrowhead = 0, 
-              ax = 20, 
-              ay = -40, 
-              arrowcolor= toRGB("grey80"),
-              font = list(color = "dark grey", size = 14)
-              )
-    
-    df4 <- df4 %>% 
-      mutate(
-        opacity = if_else(`Short Name` %in% input$`Country Name`, 0.95, 0.3)
-      )
-    
-    plot_ly(data = df4) %>%
-      add_trace(
-        x = ~ mrv2,
-        y = ~ mrv,
-        type = 'scatter',
-        mode = 'markers',
-        color = ~Region,
-        colors = reg_color,
-        opacity = ~opacity,
-        size   = ~siz,
-        sizes  = c(20, 100),
-        hoverinfo = 'text',
-        text = ~ paste(df4$`Short Name`)
-      ) %>%
-    #add_annotations(text = df4$lab, textfont = list(size = 14),
-    #         textposition = "top right") %>% 
-      layout(legend = list(x = 0, 
-                           y = -0.2, 
-                           orientation = 'h'
-                           ),
-             annotations = a,
-             xaxis = list(zeroline = FALSE, 
-                          showline = FALSE, 
-                          showgrid = TRUE, 
-                          title = str_wrap((input$variable2), 40),
-                          range = c(min(df4$variable), max(df4$variable))
-                          ),
-             yaxis = list(zeroline = FALSE, 
-                          showline = FALSE, 
-                          showgrid = TRUE, 
-                          title = input$variable,
-                          range = c(min(df4$variable), max(df4$variable))
-                          )
-             )
-      })
+  
+  df3 <- df3 %>%
+    rename("mrv2" = "mrv")
+  
+  df4 <- merge(df2, df3, by = c("iso3c"))   
+  df4 <- merge(df4, dfs, by = c("iso3c"))  
+  
+  m <- df4[df4$`Short Name` %in% input$`Country Name`,]
+  a <- list(x = m$mrv2, y = m$mrv,
+            text = m$`Short Name`, 
+            xref = "x", 
+            yref = "y",
+            showarrow = TRUE, 
+            arrowhead = 0, 
+            ax = 20, 
+            ay = -40, 
+            arrowcolor= toRGB("grey80"),
+            font = list(color = "dark grey", size = 14)
+  )
+  
+  df4 <- df4 %>% 
+    mutate(
+      opacity = if_else(`Short Name` %in% input$`Country Name`, 0.95, 0.3)
+    )
+  
+  texty <- paste("</br>", df4$`Short Name`,
+                 "</br>X: ", round(df4$mrv2, 1), " (Year: ", df4$mry, ")", 
+                 "</br>Y: ", round(df4$mrv, 1), " (Year: ", df4$mry, ")")
+  
+  
+  plot_ly(data = df4) %>%
+    add_trace(
+      x = ~ mrv2,
+      y = ~ mrv,
+      type = 'scatter',
+      mode = 'markers',
+      color = ~Region,
+      colors = reg_color,
+      opacity = ~opacity,
+      size   = ~siz,
+      sizes  = c(20, 100),
+      hoverinfo = 'text',
+      text = ~ texty
+    ) %>%
+    layout(legend = list(x = 0, 
+                         y = -0.2, 
+                         orientation = 'h'
+    ),
+    annotations = a,
+    xaxis = list(zeroline = FALSE, 
+                 showline = FALSE, 
+                 showgrid = TRUE, 
+                 title = str_wrap(input$variable2, 40),
+                 range = c(min(df4$variable), max(df4$variable))
+    ),
+    yaxis = list(zeroline = FALSE, 
+                 showline = FALSE, 
+                 showgrid = TRUE, 
+                 title = str_wrap(input$variable, 40),
+                 range = c(min(df4$variable), max(df4$variable))
+    )
+    )
+})
 
 ```
 
@@ -208,7 +211,7 @@ output$plot1 <- renderPlotly({
                  & fullcd2$variable %in% input$variable,]
   
   dft <- dft    %>%
-  arrange(date) %>% 
+    arrange(date) %>% 
     group_by(Region) %>% 
     mutate(
       op = match(name, unique(name)), 
@@ -226,6 +229,9 @@ output$plot1 <- renderPlotly({
   )
   rm(op)
   
+  texty <- paste("</br>", dft$`Short Name`,
+                 "</br>Y: ", round(dft$value, 1), 
+                 "</br>Year: ", dft$date)
   
   plot_ly(data = dft,
           x = ~date,
@@ -233,7 +239,9 @@ output$plot1 <- renderPlotly({
     add_trace(
       name = ~ `Short Name`, 
       type = 'scatter',
-      mode = 'lines+markers'
+      mode = 'lines+markers',
+      hoverinfo = 'text',
+      text = ~ texty
     ) %>%
     layout(
       legend = list(orientation = 'h'),
@@ -254,14 +262,18 @@ output$plot1 <- renderPlotly({
 })
 
 output$plot2 <- renderPlotly({
-    
+  
   df1 <- dfm[dfm$`Short Name` %in% input$`Country Name` 
              & dfm$variable %in% input$variable,]
-
+  
   df1 <- df1 %>%
     group_by(iso3c) %>%
     arrange(date) %>%
     mutate(date = as.numeric(date))
+  
+  texty <- paste("</br>", df1$`Short Name`,
+                 "</br>Y: ", round(df1$value, 1), 
+                 "</br>Year: ", df1$date)
   
   plot_ly(df1) %>%
     add_trace(
@@ -270,179 +282,186 @@ output$plot2 <- renderPlotly({
       name = ~ `Short Name`,
       type = 'scatter',
       mode = 'lines',
-      color = df1$iso3c
+      color = df1$iso3c,
+      hoverinfo = 'text',
+      text = ~ texty
     ) %>%
-  layout(legend = list(orientation = 'h'),
-         xaxis = list(title = '', 
-                      zeroline = FALSE, 
-                      showline = FALSE, 
-                      showgrid = TRUE
-                      ), 
-         yaxis = list(title = str_wrap(input$variable, 40), 
-                      zeroline = FALSE, 
-                      showline = FALSE, 
-                      showgrid = TRUE
-                      )
-         )
-
+    layout(legend = list(orientation = 'h'),
+           xaxis = list(title = '', 
+                        zeroline = FALSE, 
+                        showline = FALSE, 
+                        showgrid = TRUE
+           ), 
+           yaxis = list(title = str_wrap(input$variable, 40), 
+                        zeroline = FALSE, 
+                        showline = FALSE, 
+                        showgrid = TRUE
+           )
+    )
+  
 })
 
 ```
 
 COVID-19 Cases
 =====================================
-
+  
 Sidebar { .sidebar data-width=250}
 -----------------------------------------------------------------------
-
+  
 ```{r}
 
-selectInput("Country",
-                "Country:",
-                c(unique(as.character(dfm$`Short Name`))),
-                 selected = "China")
+radioButtons("var",
+             "",
+             choices = covid,  
+             selected = "COVID-19 Cases: Confirmed"
+)   
 
-selectInput("var",
-               "COVID Indicator:",
-                choices = covid,  
-                selected = "COVID-19 Cases: Confirmed"
-                )   
-
-```
-
-Row  {data-height=130}
------------------------------------------------------------------------
-### Selected country, `r my_date`
-```{r}
-
-renderValueBox({
-    con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Confirmed" &
-                   fullcd2$date == max(fullcd2$date) &
-                   fullcd2$`Short Name` == input$Country), "value"]
-    con <- format(con, big.mark=",")
-    de <- paste0("Confirmed: ", con)
-  valueBox(tags$p(de, style = "font-size: 80%;")
-           #,
-           #icon = "fa-users"
-           )
+getind <- reactive({
+  input$var
 })
+
 ```
 
-### Selected country, `r my_date`
-```{r}
-renderValueBox({
-    con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Active" &
-                   fullcd2$date == max(fullcd2$date) &
-                   fullcd2$`Short Name` == input$Country), "value"]
-    con <- format(con, big.mark=",")
-    de <- paste0("Active: ", con)
-  valueBox(tags$p(de, style = "font-size: 80%;")
-           #,
-           #icon = "fa-users"
-           )
-})
-```
-
-### Selected country, `r my_date`
-```{r}
-renderValueBox({
-    con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Deaths" &
-                   fullcd2$date == max(fullcd2$date) &
-                   fullcd2$`Short Name` == input$Country), "value"]
-    con <- format(con, big.mark=",")
-    de <- paste0("Deaths: ", con)
-  valueBox(tags$p(de, style = "font-size: 80%;")
-           #,
-           #icon = "fa-users"
-           )
-})
-```
-
+<!-- Row  {data-height=130} -->
+  <!-- ----------------------------------------------------------------------- -->
+  <!-- ### Selected country, `r my_date` -->
+  <!-- ```{r} -->
+  
+  <!-- renderValueBox({ -->
+      <!--     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Confirmed" & -->
+                                 <!--                    fullcd2$date == max(fullcd2$date) & -->
+                                 <!--                    fullcd2$`Short Name` == input$Country), "value"] -->
+        <!--     con <- format(con, big.mark=",") -->
+          <!--     de <- paste0("Confirmed: ", con) -->
+            <!--   valueBox(tags$p(de, style = "font-size: 80%;") -->
+                              <!--            #, -->
+                              <!--            #icon = "fa-users" -->
+                              <!--            ) -->
+            <!-- }) -->
+  <!-- ``` -->
+  
+  <!-- ### Selected country, `r my_date` -->
+  <!-- ```{r} -->
+  <!-- renderValueBox({ -->
+      <!--     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Active" & -->
+                                 <!--                    fullcd2$date == max(fullcd2$date) & -->
+                                 <!--                    fullcd2$`Short Name` == input$Country), "value"] -->
+        <!--     con <- format(con, big.mark=",") -->
+          <!--     de <- paste0("Active: ", con) -->
+            <!--   valueBox(tags$p(de, style = "font-size: 80%;") -->
+                              <!--            #, -->
+                              <!--            #icon = "fa-users" -->
+                              <!--            ) -->
+            <!-- }) -->
+  <!-- ``` -->
+  
+  <!-- ### Selected country, `r my_date` -->
+  <!-- ```{r} -->
+  <!-- renderValueBox({ -->
+      <!--     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Deaths" & -->
+                                 <!--                    fullcd2$date == max(fullcd2$date) & -->
+                                 <!--                    fullcd2$`Short Name` == input$Country), "value"] -->
+        <!--     con <- format(con, big.mark=",") -->
+          <!--     de <- paste0("Deaths: ", con) -->
+            <!--   valueBox(tags$p(de, style = "font-size: 80%;") -->
+                              <!--            #, -->
+                              <!--            #icon = "fa-users" -->
+                              <!--            ) -->
+            <!-- }) -->
+  <!-- ``` -->
+  
 Row
 -----------------------------------------------------------------------
-### Cumulative confirmed cases
-
+### `r renderText(getind())`
+  
 ```{r}
 renderPlotly({
-
-tmp <- fullcd2[(fullcd2$variable %in% input$var),]  
   
-tmp <- tmp[tmp$date == max(tmp$date),]
-tmp <- tmp[!is.na(tmp$Region),]
-
-# Compute regional aggregates
-tmp2 <- tmp %>%
-  select(Region) %>%
-  distinct() %>%
-  mutate(
-    `Short Name` = unique(Region),
-    Region = "World",
-    value = 0
-  )
-
-# Combine Regional aggregates with country level data
-tmp3 <- bind_rows(tmp, tmp2) %>%
-  select(Region, `Short Name`, value) %>%
-  filter(
-    Region %in% c("World", "Europe & Central Asia", "East Asia & Pacific", 
-                  "North America", "Middle East & North Africa", "Latin America & Caribbean", 
-                  "South Asia", "Sub-Saharan Africa")
-  ) %>% 
-  left_join(color_map2) %>% 
-  left_join(color_map2, by = c("Short Name" = "Region")) %>% 
-  mutate(
-    color = if_else(is.na(color.x), color.y, color.x)
-  ) %>% 
-  select(-color.x, -color.y)
+  tmp <- fullcd2[(fullcd2$variable %in% input$var),]  
   
-tmp3 %>%
-  plot_ly( 
-    type    = "treemap",
-    labels  = ~`Short Name`,
-    parents = ~Region,
-    values  = ~value,
-    marker  = list(colors = ~color)
-  ) 
-
+  tmp <- tmp[tmp$date == max(tmp$date),]
+  tmp <- tmp[!is.na(tmp$Region),]
+  
+  # Compute regional aggregates
+  tmp2 <- tmp %>%
+    select(Region) %>%
+    distinct() %>%
+    mutate(
+      `Short Name` = unique(Region),
+      Region = "World",
+      value = 0
+    )
+  
+  # Combine Regional aggregates with country level data
+  tmp3 <- bind_rows(tmp, tmp2) %>%
+    select(Region, `Short Name`, value) %>%
+    filter(
+      Region %in% c("World", "Europe & Central Asia", "East Asia & Pacific", 
+                    "North America", "Middle East & North Africa", "Latin America & Caribbean", 
+                    "South Asia", "Sub-Saharan Africa")
+    ) %>% 
+    left_join(color_map2) %>% 
+    left_join(color_map2, by = c("Short Name" = "Region")) %>% 
+    mutate(
+      color = if_else(is.na(color.x), color.y, color.x)
+    ) %>% 
+    select(-color.x, -color.y)
+  
+  tmp3 %>%
+    plot_ly( 
+      type    = "treemap",
+      labels  = ~`Short Name`,
+      parents = ~Region,
+      values  = ~value,
+      marker  = list(colors = ~color)
+    ) 
+  
 })
 
 
 ```
 
 
-### Countries with maximum cases confirmed by `r my_date`
+### `r renderText(getind())`
 
 ```{r}
 
 renderPlotly({
   
   dfb <- fullcd2 %>% 
-  filter(date == max(date),
-         variable %in% input$var) %>%
-  arrange(desc(value))  %>%
-  mutate(`Short Name` = fct_reorder(`Short Name`, desc(value))) %>% 
-  slice(1:20)
+    filter(date == max(date),
+           variable %in% input$var) %>%
+    arrange(desc(value))  %>%
+    mutate(`Short Name` = fct_reorder(`Short Name`, desc(value))) %>% 
+    slice(1:20)
   
- plot_ly(dfb, 
-        type = 'bar', 
-        x = ~`Short Name`, 
-        y = ~value, 
-        color = ~Region,
-        colors = reg_color
-        ) %>% 
-        layout(
-          legend = list(orientation = 'h'),
-          xaxis = list(title = '', 
-                       zeroline = FALSE, 
-                       showline = FALSE, 
-                       showgrid = TRUE
-                    ), 
-          yaxis = list(title = '', 
-                     zeroline = FALSE, 
-                     showline = FALSE, 
-                     showgrid = TRUE
-                    )
-          )
+  texty <- paste("</br>", dfb$`Short Name`,
+                 "</br>Y: ", dfb$value, 
+                 "</br>Year: ", dfb$date)
+  
+  plot_ly(dfb, 
+          type = 'bar', 
+          x = ~`Short Name`, 
+          y = ~value, 
+          color = ~Region,
+          colors = reg_color,
+          hoverinfo = 'text',
+          text = ~ texty
+  ) %>% 
+    layout(
+      legend = list(orientation = 'h'),
+      xaxis = list(title = '', 
+                   zeroline = FALSE, 
+                   showline = FALSE, 
+                   showgrid = TRUE
+      ), 
+      yaxis = list(title = '', 
+                   zeroline = FALSE, 
+                   showline = FALSE, 
+                   showgrid = TRUE
+      )
+    )
 })
 
 
@@ -451,27 +470,27 @@ renderPlotly({
 
 Center of gravity
 =====================================
-
+  
 Sidebar { .sidebar data-width=250}
 -----------------------------------------------------------------------
-
+  
 ```{r}
 
- radioButtons("tab", "Type:",
-               c("COVID-19 Cases: Confirmed",
-                 "COVID-19 Cases: Deaths")
-              )
+radioButtons("tab", "Type:",
+             c("COVID-19 Cases: Confirmed",
+               "COVID-19 Cases: Deaths")
+)
 ```  
 
 Row  {data-height=500}
 -----------------------------------------------------------------------
-
+  
 ```{r}
 uiOutput("dynamic2")
 
 output$dynamic2 <- renderUI({
   if (input$tab == "COVID-19 Cases: Confirmed")
-       {
+  {
     plotOutput("map1", width = "1024px", height="700px")
   } else {
     plotOutput("map2", width = "800px", height="600px" )
@@ -483,7 +502,7 @@ load(file = "input/area_df.rda")
 
 # Map over daily confirmed
 output$map1 <- renderPlot({
-
+  
   ggplot() +
     geom_polygon(
       data = area_df,
@@ -519,12 +538,12 @@ output$map1 <- renderPlot({
     labs(size = "Daily new cases", color =  "Date") +
     ggtitle("Center of Gravity of COVID-19 Cases") + 
     theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20))
-   
- }) 
+  
+}) 
 
 # Map over daily deaths
 output$map2 <- renderPlot({
-
+  
   ggplot() +
     geom_polygon(
       data = area_df,
