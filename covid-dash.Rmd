@@ -215,8 +215,8 @@ renderPlotly ({
         type = 'scatter',
         mode = 'markers',
         color = ~Region,
-        opacity = ~opacity,
         colors = reg_color,
+        opacity = ~opacity,
         size   = ~siz,
         sizes  = c(20, 100),
         hoverinfo = 'text',
@@ -474,32 +474,30 @@ tmp3 %>%
 
 renderPlotly({
   
-  fullcd2 <- fullcd2[fullcd2$date == max(fullcd2$date),]
-  fullcd2 <- fullcd2 %>%
-          filter(variable %in% input$var) %>%
-          arrange(desc(value))  %>%
-          mutate(`Short Name` = fct_reorder(`Short Name`, desc(value)))
+  dfb <- fullcd2 %>% 
+  filter(date == max(date),
+         variable %in% input$var) %>%
+  arrange(desc(value))  %>%
+  mutate(`Short Name` = fct_reorder(`Short Name`, desc(value))) %>% 
+  slice(1:20)
   
-  fullcd2 <- fullcd2[c(1:20),]
-  
-  plot_ly(fullcd2, 
-          x = ~`Short Name`, 
-          y = ~value, 
-          type = 'bar', 
-          color = ~Region
-          ) %>% 
-              layout(xaxis = list(title = '', 
-                                  zeroline = FALSE, 
-                                  showline = FALSE, 
-                                  showgrid = TRUE
-                                  ), 
-                     yaxis = list(title = '', 
-                                  zeroline = FALSE, 
-                                  showline = FALSE, 
-                                  showgrid = TRUE)
-                     )
-  
-  
+ plot_ly(dfb, 
+        type = 'bar', 
+        x = ~`Short Name`, 
+        y = ~value, 
+        color = ~Region,
+        colors = reg_color
+        ) %>% 
+        layout(xaxis = list(title = '', 
+                            zeroline = FALSE, 
+                            showline = FALSE, 
+                            showgrid = TRUE
+        ), 
+        yaxis = list(title = '', 
+                     zeroline = FALSE, 
+                     showline = FALSE, 
+                     showgrid = TRUE)
+        )
 })
 
 
