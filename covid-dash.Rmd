@@ -16,6 +16,18 @@ today <- as.Date(my_date) + 1
 #--------- filtered cases
 covid <- grep("(Confirmed|Deaths)", covid, value = TRUE)
 
+
+#------country palette
+#This has to be done here and not in utils because Ineed the `fullcd2` dataframe
+
+uniq_cty <- unique(fullcd2$`Short Name`)
+
+cty_color <-  setNames(
+  rep(palette, ceil(length(uniq_cty)/length(palette)))[1:length(uniq_cty)],
+  uniq_cty
+)
+
+
 ```
 
 
@@ -121,74 +133,74 @@ renderPlotly ({
   df2 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable, ]
   df3 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable2, c(1, 6)]
   dfs <- dfm[dfm$date == 2019 & dfm$variable %in% input$size, c(1, 6)]
+   
+    dfs <- dfs %>%
+          rename("siz" = "mrv")
+
+     
+    df3 <- df3 %>%
+          rename("mrv2" = "mrv")
   
-  dfs <- dfs %>%
-    rename("siz" = "mrv")
+    df4 <- merge(df2, df3, by = c("iso3c"))   
+    df4 <- merge(df4, dfs, by = c("iso3c"))  
   
-  
-  df3 <- df3 %>%
-    rename("mrv2" = "mrv")
-  
-  df4 <- merge(df2, df3, by = c("iso3c"))   
-  df4 <- merge(df4, dfs, by = c("iso3c"))  
-  
-  m <- df4[df4$`Short Name` %in% input$`Country Name`,]
-  a <- list(x = m$mrv2, y = m$mrv,
-            text = m$`Short Name`, 
-            xref = "x", 
-            yref = "y",
-            showarrow = TRUE, 
-            arrowhead = 0, 
-            ax = 20, 
-            ay = -40, 
-            arrowcolor= toRGB("grey80"),
-            font = list(color = "dark grey", size = 14)
-  )
-  
-  df4 <- df4 %>% 
-    mutate(
-      opacity = if_else(`Short Name` %in% input$`Country Name`, 0.95, 0.3)
-    )
-  
-  texty <- paste("</br>", df4$`Short Name`,
+    m <- df4[df4$`Short Name` %in% input$`Country Name`,]
+    a <- list(x = m$mrv2, y = m$mrv,
+              text = m$`Short Name`, 
+              xref = "x", 
+              yref = "y",
+              showarrow = TRUE, 
+              arrowhead = 0, 
+              ax = 20, 
+              ay = -40, 
+              arrowcolor= toRGB("grey80"),
+              font = list(color = "dark grey", size = 14)
+              )
+    
+    df4 <- df4 %>% 
+      mutate(
+        opacity = if_else(`Short Name` %in% input$`Country Name`, 0.95, 0.3)
+      )
+    
+     texty <- paste("</br>", df4$`Short Name`,
                  "</br>X: ", round(df4$mrv2, 1), " (Year: ", df4$mry, ")", 
                  "</br>Y: ", round(df4$mrv, 1), " (Year: ", df4$mry, ")")
-  
-  
-  plot_ly(data = df4) %>%
-    add_trace(
-      x = ~ mrv2,
-      y = ~ mrv,
-      type = 'scatter',
-      mode = 'markers',
-      color = ~Region,
-      colors = reg_color,
-      opacity = ~opacity,
-      size   = ~siz,
-      sizes  = c(20, 100),
+    
+    plot_ly(data = df4) %>%
+      add_trace(
+        x = ~ mrv2,
+        y = ~ mrv,
+        type = 'scatter',
+        mode = 'markers',
+        color = ~Region,
+        colors = reg_color,
+        opacity = 0.9,
+        size   = ~siz,
+        sizes  = c(20, 100),
       hoverinfo = 'text',
       text = ~ texty
-    ) %>%
-    layout(legend = list(x = 0, 
-                         y = -0.2, 
-                         orientation = 'h'
-    ),
-    annotations = a,
-    xaxis = list(zeroline = FALSE, 
-                 showline = FALSE, 
-                 showgrid = TRUE, 
-                 title = str_wrap(input$variable2, 40),
-                 range = c(min(df4$variable), max(df4$variable))
-    ),
-    yaxis = list(zeroline = FALSE, 
-                 showline = FALSE, 
-                 showgrid = TRUE, 
-                 title = str_wrap(input$variable, 40),
-                 range = c(min(df4$variable), max(df4$variable))
-    )
-    )
-})
-
+      ) %>%
+    #add_annotations(text = df4$lab, textfont = list(size = 14),
+    #         textposition = "top right") %>% 
+      layout(legend = list(x = 0, 
+                           y = -0.2, 
+                           orientation = 'h'
+                           ),
+             annotations = a,
+             xaxis = list(zeroline = FALSE, 
+                          showline = FALSE, 
+                          showgrid = TRUE, 
+                          title = str_wrap((input$variable2), 40),
+                          range = c(min(df4$variable), max(df4$variable))
+                          ),
+             yaxis = list(zeroline = FALSE, 
+                          showline = FALSE, 
+                          showgrid = TRUE, 
+                          title = str_wrap(input$variable, 40),
+                          range = c(min(df4$variable), max(df4$variable))
+                          )
+             )
+      })
 ```
 
 
@@ -210,24 +222,27 @@ output$plot1 <- renderPlotly({
   dft <- fullcd2[fullcd2$`Short Name` %in% input$`Country Name`
                  & fullcd2$variable %in% input$variable,]
   
-  dft <- dft    %>%
-    arrange(date) %>% 
-    group_by(Region) %>% 
-    mutate(
-      op = match(name, unique(name)), 
-      opacity = (1-(op/max(op))+1/max(op))
-    ) %>% 
-    ungroup()
+dft <- dft    %>%
+  arrange(date) %>% 
+  group_by(Region) %>% 
+  mutate(
+    op = match(name, unique(name)), 
+    opacity = (1-(op/max(op))+1/max(op)),
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    colors = rep(palette, ceil(nrow(.)/length(palette)))[1:nrow(.)]
+  )  
   
-  op <- dft %>% 
-    group_by(`Short Name`) %>% 
-    summarise(opacity = mean(opacity))
-  
-  opacity  <- setNames(
-    op$opacity,
-    op$`Short Name`
-  )
-  rm(op)
+  # op <- dft %>% 
+  #   group_by(`Short Name`) %>% 
+  #   summarise(opacity = mean(opacity))
+  # 
+  # opacity  <- setNames(
+  #   op$opacity,
+  #   op$`Short Name`
+  # )
+  # rm(op)
   
   texty <- paste("</br>", dft$`Short Name`,
                  "</br>Y: ", round(dft$value, 1), 
@@ -237,9 +252,12 @@ output$plot1 <- renderPlotly({
           x = ~date,
           y = ~ value ) %>%
     add_trace(
-      name = ~ `Short Name`, 
-      type = 'scatter',
-      mode = 'lines+markers',
+
+      name  = ~ `Short Name`, 
+      type  = 'scatter',
+      mode  = 'lines+markers', 
+      color = ~`Short Name`,
+      colors = cty_color,
       hoverinfo = 'text',
       text = ~ texty
     ) %>%
@@ -269,7 +287,12 @@ output$plot2 <- renderPlotly({
   df1 <- df1 %>%
     group_by(iso3c) %>%
     arrange(date) %>%
-    mutate(date = as.numeric(date))
+    mutate(date = as.numeric(date)) %>% 
+    ungroup() %>% 
+    mutate(
+      colors = rep(palette, ceil(nrow(.)/length(palette)))[1:nrow(.)]
+    )
+
   
   texty <- paste("</br>", df1$`Short Name`,
                  "</br>Y: ", round(df1$value, 1), 
@@ -281,8 +304,9 @@ output$plot2 <- renderPlotly({
       y = ~ value,
       name = ~ `Short Name`,
       type = 'scatter',
-      mode = 'lines',
-      color = df1$iso3c,
+      mode = 'lines+markers',
+      color = ~`Short Name`,
+      colors = cty_color,
       hoverinfo = 'text',
       text = ~ texty
     ) %>%
