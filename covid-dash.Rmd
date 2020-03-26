@@ -11,6 +11,8 @@ source("styles.R")
 source("00_setup.R")
 source("03_load_data.R")
 my_date <- max(wld_data$date)
+my_date2 <- format(as.Date(my_date), format = "%b %d")
+my_date2 <- as.character(my_date2)
 today <- as.Date(my_date) + 1
 
 #--------- filtered cases
@@ -76,22 +78,22 @@ selectizeInput("Country Name",
 
 Row  {data-height=130}
 -----------------------------------------------------------------------
-### World, `r my_date`
+### World
 ```{r}
 renderValueBox({
   con <- wld_data %>%
     filter(wld_data$date == max(wld_data$date)) %>%
     select(`COVID-19 cases: Confirmed`)
   con <- format(con, big.mark=",")
-  de <- paste0("Confirmed: ", con)
-  valueBox(tags$p(de, style = "font-size: 80%;")
+  de <- paste0("Total cases: ", con)
+  valueBox(tags$p(de, style = "font-size: 70%;")
            #, 
            #icon = "fa-users"
   )
 })
 ```
 
-### World, `r my_date`
+### World
 ```{r}
 renderValueBox({
   con <- new_wl %>% 
@@ -100,23 +102,23 @@ renderValueBox({
     pull() %>% 
     format(big.mark=",")
   
-  de <- paste0("New cases: ", con)
-  valueBox(tags$p(de, style = "font-size: 80%;")
+  de <- paste0("New cases (", my_date2, "): ", con)
+  valueBox(tags$p(de, style = "font-size: 70%;")
            #, 
            #icon = "fa-users"
   )
 })
 ```
 
-### World, `r my_date`
+### World
 ```{r}
 renderValueBox({
   con <- wld_data %>%
     filter(wld_data$date == max(wld_data$date)) %>%
     select(`COVID-19 cases: Deaths`)
   con <- format(con, big.mark=",")
-  de <- paste0("Deaths: ", con)
-  valueBox(tags$p(de, style = "font-size: 80%;")
+  de <- paste0("Total deaths: ", con)
+  valueBox(tags$p(de, style = "font-size: 70%;")
            #, 
            #icon = "fa-users"
   )
@@ -245,8 +247,8 @@ dft <- dft    %>%
   # rm(op)
   
   texty <- paste("</br>", dft$`Short Name`,
-                 "</br>Y: ", round(dft$value, 1), 
-                 "</br>Year: ", dft$date)
+                 "</br>Y: ", dft$value, 
+                 "</br>Date: ", dft$date)
   
   plot_ly(data = dft,
           x = ~date,
@@ -327,11 +329,12 @@ output$plot2 <- renderPlotly({
 
 ```
 
-COVID-19 Cases
+COVID-19 Case Data
 =====================================
   
 Sidebar { .sidebar data-width=250}
 -----------------------------------------------------------------------
+Last Updated on: `r today`
   
 ```{r}
 
@@ -462,7 +465,7 @@ renderPlotly({
   
   texty <- paste("</br>", dfb$`Short Name`,
                  "</br>Y: ", dfb$value, 
-                 "</br>Year: ", dfb$date)
+                 "</br>Date: ", dfb$date)
   
   plot_ly(dfb, 
           type = 'bar', 
@@ -492,118 +495,118 @@ renderPlotly({
 ```
 
 
-Center of gravity
-=====================================
-  
-Sidebar { .sidebar data-width=250}
------------------------------------------------------------------------
-  
-```{r}
+<!-- Center of gravity -->
+<!-- ===================================== -->
 
-radioButtons("tab", "Type:",
-             c("COVID-19 Cases: Confirmed",
-               "COVID-19 Cases: Deaths")
-)
-```  
+<!-- Sidebar { .sidebar data-width=250} -->
+<!-- ----------------------------------------------------------------------- -->
 
-Row  {data-height=500}
------------------------------------------------------------------------
-  
-```{r}
-uiOutput("dynamic2")
+<!-- ```{r} -->
 
-output$dynamic2 <- renderUI({
-  if (input$tab == "COVID-19 Cases: Confirmed")
-  {
-    plotOutput("map1", width = "1024px", height="700px")
-  } else {
-    plotOutput("map2", width = "800px", height="600px" )
-  }
-})
+<!-- radioButtons("tab", "Type:", -->
+<!--              c("COVID-19 Cases: Confirmed", -->
+<!--                "COVID-19 Cases: Deaths") -->
+<!-- ) -->
+<!-- ```   -->
 
-# Loading global shapefile converted into rda
-load(file = "input/area_df.rda")
+<!-- Row  {data-height=500} -->
+<!-- ----------------------------------------------------------------------- -->
 
-# Map over daily confirmed
-output$map1 <- renderPlot({
-  
-  ggplot() +
-    geom_polygon(
-      data = area_df,
-      aes(x = long, y = lat, group = group),
-      color = 'white',
-      size = 0.1
-    ) +
-    theme(
-      panel.background = element_rect(fill = 'white', color = 'white'),
-      legend.text = element_text(size = 14),
-      legend.title = element_text(size = 14)
-    ) +
-    theme(
-      axis.title.x = element_blank(),
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank()
-    ) +
-    theme(
-      axis.title.y = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks.y = element_blank()
-    ) +
-    geom_point(
-      data = cg_data,
-      aes(
-        x = longitude_newconfirmed_rol,
-        y = latitude_newconfirmed_rol,
-        size = total_newconfirmed,
-        color = date
-      )
-    ) +
-    scale_colour_date(low = "#7878FF", high = "#000078") + 
-    labs(size = "Daily new cases", color =  "Date") +
-    ggtitle("Center of Gravity of COVID-19 Cases") + 
-    theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20))
-  
-}) 
+<!-- ```{r} -->
+<!-- uiOutput("dynamic2") -->
 
-# Map over daily deaths
-output$map2 <- renderPlot({
-  
-  ggplot() +
-    geom_polygon(
-      data = area_df,
-      aes(x = long, y = lat, group = group),
-      color = 'white',
-      size = 0.1
-    ) +
-    theme(
-      panel.background = element_rect(fill = 'white', color = 'white'),
-      legend.text = element_text(size = 14),
-      legend.title = element_text(size = 14)
-    ) +
-    theme(
-      axis.title.x = element_blank(),
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank()
-    ) +
-    theme(
-      axis.title.y = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks.y = element_blank()
-    ) +
-    geom_point(
-      data = cg_data,
-      aes(
-        x = longitude_newdeaths_rol,
-        y = latitude_newdeaths_rol,
-        size = total_newdeaths,
-        color = date
-      )
-    ) +
-    scale_colour_date(low = "#FF7878", high = "#780000") + 
-    labs(size = "Daily deaths", color = "Date") +
-    ggtitle("Center of Gravity of COVID-19 Deaths") + 
-    theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20))
-  
-})
+<!-- output$dynamic2 <- renderUI({ -->
+<!--   if (input$tab == "COVID-19 Cases: Confirmed") -->
+<!--   { -->
+<!--     plotOutput("map1", width = "1024px", height="700px") -->
+<!--   } else { -->
+<!--     plotOutput("map2", width = "800px", height="600px" ) -->
+<!--   } -->
+<!-- }) -->
 
-```
+<!-- # Loading global shapefile converted into rda -->
+<!-- load(file = "input/area_df.rda") -->
+
+<!-- # Map over daily confirmed -->
+<!-- output$map1 <- renderPlot({ -->
+
+<!--   ggplot() + -->
+<!--     geom_polygon( -->
+<!--       data = area_df, -->
+<!--       aes(x = long, y = lat, group = group), -->
+<!--       color = 'white', -->
+<!--       size = 0.1 -->
+<!--     ) + -->
+<!--     theme( -->
+<!--       panel.background = element_rect(fill = 'white', color = 'white'), -->
+<!--       legend.text = element_text(size = 14), -->
+<!--       legend.title = element_text(size = 14) -->
+<!--     ) + -->
+<!--     theme( -->
+<!--       axis.title.x = element_blank(), -->
+<!--       axis.text.x = element_blank(), -->
+<!--       axis.ticks.x = element_blank() -->
+<!--     ) + -->
+<!--     theme( -->
+<!--       axis.title.y = element_blank(), -->
+<!--       axis.text.y = element_blank(), -->
+<!--       axis.ticks.y = element_blank() -->
+<!--     ) + -->
+<!--     geom_point( -->
+<!--       data = cg_data, -->
+<!--       aes( -->
+<!--         x = longitude_newconfirmed_rol, -->
+<!--         y = latitude_newconfirmed_rol, -->
+<!--         size = total_newconfirmed, -->
+<!--         color = date -->
+<!--       ) -->
+<!--     ) + -->
+<!--     scale_colour_date(low = "#7878FF", high = "#000078") +  -->
+<!--     labs(size = "Daily new cases", color =  "Date") + -->
+<!--     ggtitle("Center of Gravity of COVID-19 Cases") +  -->
+<!--     theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20)) -->
+
+<!-- })  -->
+
+<!-- # Map over daily deaths -->
+<!-- output$map2 <- renderPlot({ -->
+
+<!--   ggplot() + -->
+<!--     geom_polygon( -->
+<!--       data = area_df, -->
+<!--       aes(x = long, y = lat, group = group), -->
+<!--       color = 'white', -->
+<!--       size = 0.1 -->
+<!--     ) + -->
+<!--     theme( -->
+<!--       panel.background = element_rect(fill = 'white', color = 'white'), -->
+<!--       legend.text = element_text(size = 14), -->
+<!--       legend.title = element_text(size = 14) -->
+<!--     ) + -->
+<!--     theme( -->
+<!--       axis.title.x = element_blank(), -->
+<!--       axis.text.x = element_blank(), -->
+<!--       axis.ticks.x = element_blank() -->
+<!--     ) + -->
+<!--     theme( -->
+<!--       axis.title.y = element_blank(), -->
+<!--       axis.text.y = element_blank(), -->
+<!--       axis.ticks.y = element_blank() -->
+<!--     ) + -->
+<!--     geom_point( -->
+<!--       data = cg_data, -->
+<!--       aes( -->
+<!--         x = longitude_newdeaths_rol, -->
+<!--         y = latitude_newdeaths_rol, -->
+<!--         size = total_newdeaths, -->
+<!--         color = date -->
+<!--       ) -->
+<!--     ) + -->
+<!--     scale_colour_date(low = "#FF7878", high = "#780000") +  -->
+<!--     labs(size = "Daily deaths", color = "Date") + -->
+<!--     ggtitle("Center of Gravity of COVID-19 Deaths") +  -->
+<!--     theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20)) -->
+
+<!-- }) -->
+
+<!-- ``` -->
