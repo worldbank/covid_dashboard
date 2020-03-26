@@ -541,33 +541,83 @@ load(file = "input/area_df.rda")
 # Map over daily confirmed
 output$map1 <- renderPlot({
 
-     ggplot() +
-  geom_polygon(data = area_df, 
-               aes(x = long, y = lat, group=group),
-               color = 'white',size=0.1) + 
-  theme(panel.background = element_rect(fill='white', color='white'), legend.text=element_text(size=14), legend.title=element_text(size=14)) +
-  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-  theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
-  geom_point(data = cg_data, aes(x=longitude_newconfirmed_rol, y=latitude_newconfirmed_rol, size=total_newconfirmed, color=date)) +
-  scale_colour_date(low = "#7878FF", high = "#000078")+labs(size="Daily new cases", color="Date")+
-  ggtitle("Center of Gravity of COVID-19 Cases")+theme(plot.title = element_text(hjust = 0.5,face="bold",size=20))
+  ggplot() +
+    geom_polygon(
+      data = area_df,
+      aes(x = long, y = lat, group = group),
+      color = 'white',
+      size = 0.1
+    ) +
+    theme(
+      panel.background = element_rect(fill = 'white', color = 'white'),
+      legend.text = element_text(size = 14),
+      legend.title = element_text(size = 14)
+    ) +
+    theme(
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank()
+    ) +
+    theme(
+      axis.title.y = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank()
+    ) +
+    geom_point(
+      data = cg_data,
+      aes(
+        x = longitude_newconfirmed_rol,
+        y = latitude_newconfirmed_rol,
+        size = total_newconfirmed,
+        color = date
+      )
+    ) +
+    scale_colour_date(low = "#7878FF", high = "#000078") + 
+    labs(size = "Daily new cases", color =  "Date") +
+    ggtitle("Center of Gravity of COVID-19 Cases") + 
+    theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20))
    
  }) 
 
 # Map over daily deaths
 output$map2 <- renderPlot({
 
-ggplot() +
-  geom_polygon(data = area_df,
-               aes(x = long, y = lat, group=group),
-               color = 'white',size=0.1) +
-  theme(panel.background = element_rect(fill='white', color='white'), legend.text=element_text(size=14), legend.title=element_text(size=14)) +
-  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-  theme(axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
-  geom_point(data = cg_data, aes(x=longitude_newdeaths_rol, y=latitude_newdeaths_rol, size=total_newdeaths, color=date)) +
-  scale_colour_date(low = "#FF7878", high = "#780000")+labs(size="Daily deaths", color="Date") +
-  ggtitle("Center of Gravity of COVID-19 Deaths")+theme(plot.title = element_text(hjust = 0.5,face="bold",size=20))
-
+  ggplot() +
+    geom_polygon(
+      data = area_df,
+      aes(x = long, y = lat, group = group),
+      color = 'white',
+      size = 0.1
+    ) +
+    theme(
+      panel.background = element_rect(fill = 'white', color = 'white'),
+      legend.text = element_text(size = 14),
+      legend.title = element_text(size = 14)
+    ) +
+    theme(
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank()
+    ) +
+    theme(
+      axis.title.y = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank()
+    ) +
+    geom_point(
+      data = cg_data,
+      aes(
+        x = longitude_newdeaths_rol,
+        y = latitude_newdeaths_rol,
+        size = total_newdeaths,
+        color = date
+      )
+    ) +
+    scale_colour_date(low = "#FF7878", high = "#780000") + 
+    labs(size = "Daily deaths", color = "Date") +
+    ggtitle("Center of Gravity of COVID-19 Deaths") + 
+    theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20))
+  
 })
 
 ```
