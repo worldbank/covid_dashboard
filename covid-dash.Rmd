@@ -117,7 +117,6 @@ selectizeInput("Country Name",
                 multiple = TRUE, 
                selected = c("China", "Italy", "United States", "Spain", "Iran")
                )
-
 ```
 
 Row  {data-height=130}
@@ -488,16 +487,19 @@ renderPlotly({
         color = ~Region,
         colors = reg_color
         ) %>% 
-        layout(xaxis = list(title = '', 
-                            zeroline = FALSE, 
-                            showline = FALSE, 
-                            showgrid = TRUE
-        ), 
-        yaxis = list(title = '', 
+        layout(
+          legend = list(orientation = 'h'),
+          xaxis = list(title = '', 
+                       zeroline = FALSE, 
+                       showline = FALSE, 
+                       showgrid = TRUE
+                    ), 
+          yaxis = list(title = '', 
                      zeroline = FALSE, 
                      showline = FALSE, 
-                     showgrid = TRUE)
-        )
+                     showgrid = TRUE
+                    )
+          )
 })
 
 
