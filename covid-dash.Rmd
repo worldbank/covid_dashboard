@@ -520,7 +520,7 @@ Sidebar { .sidebar data-width=250}
               )
 ```  
 
-Row
+Row  {data-height=500}
 -----------------------------------------------------------------------
 
 ```{r}
@@ -529,9 +529,9 @@ uiOutput("dynamic2")
 output$dynamic2 <- renderUI({
   if (input$tab == "COVID-19 Cases: Confirmed")
        {
-    plotOutput("map1")
+    plotOutput("map1", width = "1024px", height="700px")
   } else {
-    plotOutput("map2")
+    plotOutput("map2", width = "800px", height="600px" )
   }
 })
 
