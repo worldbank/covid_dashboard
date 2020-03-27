@@ -5,3 +5,7 @@
 sessionInfoLog
 
 testing.R
+
+01_get_data.R
+02_prep_data.R
+03_load_data.R

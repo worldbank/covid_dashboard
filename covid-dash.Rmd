@@ -9,7 +9,21 @@ output:
 ```{r setup, include=FALSE}
 source("styles.R")
 source("00_setup.R")
-source("03_load_data.R")
+# Load data from server
+dfm            <- fst::read_fst(paste0(data_path, "dfm.fst"))
+ccc            <- fst::read_fst(paste0(data_path, "ccc.fst"))
+fullcd2        <- fst::read_fst(paste0(data_path, "fullcd2.fst"))
+wld_data       <- fst::read_fst(paste0(data_path, "wld_data.fst"))
+indicator_list <- fst::read_fst(paste0(data_path, "indicator_list,fst"))
+new_c          <- fst::read_fst(paste0(data_path, "new_c.fst"))
+new_wl         <- fst::read_fst(paste0(data_path, "new_wl.fst"))
+tmp            <- readr::read_rds(paste0(data_path, "temporary_file,rds"))
+age_pop        <- readr::read_rds(paste0(data_path, "age_pop.RDS"))
+covid          <- readr::read_rds(paste0(data_path, "covid.RDS"))
+health         <- readr::read_rds(paste0(data_path, "health.RDS"))
+water          <- readr::read_rds(paste0(data_path, "water.RDS"))
+cg_data        <- readr::read_rds(paste0(data_path, "cg_data.RDS"))
+
 my_date <- max(wld_data$date)
 my_date2 <- format(as.Date(my_date), format = "%b %d")
 my_date2 <- as.character(my_date2)
