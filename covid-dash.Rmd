@@ -182,8 +182,8 @@ renderPlotly ({
       )
     
      texty <- paste("</br>", df4$`Short Name`,
-                 "</br>X: ", round(df4$mrv2, 1), " (Year: ", df4$mry, ")", 
-                 "</br>Y: ", round(df4$mrv, 1), " (Year: ", df4$mry, ")")
+                    "</br>X: ", round(df4$mrv2, 1),
+                    "</br>Y: ", round(df4$mrv, 1))
     
     plot_ly(data = df4) %>%
       add_trace(
@@ -494,7 +494,9 @@ renderPlotly({
           text = ~ texty
   ) %>% 
     layout(
-      legend = list(orientation = 'h'),
+      legend = list(orientation = 'h', 
+                    y = 100, 
+                    x = 0),
       xaxis = list(title = '', 
                    zeroline = FALSE, 
                    showline = FALSE, 
