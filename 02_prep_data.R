@@ -1,7 +1,7 @@
 
 # WDI data ----------------------------------------------------------------
 # Replace with local data
-dfm <-  readr::read_rds("input/wbgdata.rds") %>%
+dfm <-  readr::read_rds(paste0(data_path_raw, "wbgdata.rds")) %>%
   melt(id = c("iso3c", "date"))
 
 mry <- dfm %>%
@@ -20,26 +20,26 @@ dfm <- merge(dfm, mry, by = c("date", "iso3c", "variable"), all.x = T) %>%
   rename(varcode = variable)
 
 # merging indicator metadata
-indicator_list <- readr::read_rds("input/indicator_list.rds") %>%
+indicator_list <- readr::read_rds(paste0(data_path_raw, "indicator_list.rds")) %>%
   rename(variable = name)
 
 dfm <- merge(dfm, indicator_list, by.x = "varcode", by.y = "code", all.x = T)
 
 # COVID data --------------------------------------------------------------
 
-wld_data <- readr::read_rds("input/wld_data.rds")
+wld_data <- readr::read_rds(paste0(data_path_raw, "wld_data.rds"))
 
 # get country list
-full_country_data <- readr::read_rds("input/full_country_data.rds") %>%
+full_country_data <- readr::read_rds(paste0(data_path_raw, "full_country_data.rds")) %>%
   mutate(
     date                     = as.Date(date, "%Y/%m/%d"),
     confirmed                = as.numeric(confirmed),
-#    recovered                = as.numeric(recovered),
+    #    recovered                = as.numeric(recovered),
     deaths                   = as.numeric(deaths)
-#    `COVID-19 Cases: Active` = confirmed - deaths - recovered
+    #    `COVID-19 Cases: Active` = confirmed - deaths - recovered
   ) %>%
   rename("COVID-19 Cases: Confirmed" = confirmed,
-#         "COVID-19 Cases: Recovered" = recovered,
+         #         "COVID-19 Cases: Recovered" = recovered,
          "COVID-19 Cases: Deaths"    = deaths)
 
 # New indicators including populatio, lat, long merged with corona data
@@ -56,22 +56,22 @@ full_country_data <- full_country_data %>%
     latitude  = as.numeric(as.character(latitude)),
     `COVID-19 Cases: Confirmed (per 1,000 people)` =  (`COVID-19 Cases: Confirmed`/SP.POP.TOTL)*1000,
     `COVID-19 Cases: Deaths (per 1,000 people)` =  (`COVID-19 Cases: Deaths`/SP.POP.TOTL)*1000
-  ) 
+  )
 
 
 full_country_data <- full_country_data %>%
   arrange(date) %>%
-  group_by(iso) %>% 
+  group_by(iso) %>%
   mutate(`COVID-19 Cases: New Confirmed cases (Daily)` = `COVID-19 Cases: Confirmed` - dplyr::lag(`COVID-19 Cases: Confirmed`, n = 1, default = NA),
          `COVID-19 Cases: New Deaths (Daily)`   = `COVID-19 Cases: Deaths`    - dplyr::lag(`COVID-19 Cases: Deaths`,    n = 1, default = NA))
 
-full_country_data$`COVID-19 Cases: New Deaths (Daily)` <- ifelse(full_country_data$`COVID-19 Cases: New Deaths (Daily)` < 0, 
+full_country_data$`COVID-19 Cases: New Deaths (Daily)` <- ifelse(full_country_data$`COVID-19 Cases: New Deaths (Daily)` < 0,
                                                                  NA, full_country_data$`COVID-19 Cases: New Deaths (Daily)`)
 
 fullcd <- melt(full_country_data, id = c("iso", "name", "date", "latitude", "longitude", "SP.POP.TOTL")) %>%
   mutate(
     value = as.numeric(value)
-  ) 
+  )
 
 cc <- fullcd %>%
   dplyr::filter(date ==  max(date)) %>%
@@ -80,9 +80,9 @@ cc <- fullcd %>%
     date2 = 2019
   )
 
-dfm <- merge(dfm, cc[, -c(4, 5)], 
-             by.x = c("iso3c", "variable", "date"), 
-             by.y = c("iso", "variable", "date2"), 
+dfm <- merge(dfm, cc[, -c(4, 5)],
+             by.x = c("iso3c", "variable", "date"),
+             by.y = c("iso", "variable", "date2"),
              all = T) %>%
   mutate(
     mrv.x = ifelse(!is.na(mrv.y), mrv.y, mrv.x)
@@ -92,12 +92,12 @@ dfm <- merge(dfm, cc[, -c(4, 5)],
 
 # Country metadata --------------------------------------------------------
 
-cm <- read_excel("input/country_metadata.xlsx", sheet = "Country - Metadata") %>%
+cm <- read_excel(paste0(data_path, "country_metadata.xlsx")) %>%
   select("Code",
          "Income Group",
          "Region",
          "Short Name"
-         )
+  )
 
 dfm <- merge(dfm, cm, by.x = "iso3c", by.y = "Code", all.x = T) %>%
   dplyr::filter(!is.na(Region))
@@ -105,14 +105,14 @@ dfm <- merge(dfm, cm, by.x = "iso3c", by.y = "Code", all.x = T) %>%
 dfm <- dfm[, -c(4, 9, 10, 11)]
 dfm <- dfm[!is.na(dfm$value) | !is.na(dfm$mry) | !is.na(dfm$mrv), ]
 dfm$topic<- as.character(dfm$topic)
-dfm$topic <- ifelse(dfm$variable == "COVID-19 Cases: Confirmed" | 
-                    dfm$variable == "COVID-19 Cases: Confirmed (per 1,000 people)" |
-                    dfm$variable == "COVID-19 Cases: Deaths (per 1,000 people)" |
-                    dfm$variable == "COVID-19 Cases: New Confirmed cases (Daily)" |
-                    dfm$variable == "COVID-19 Cases: New Deaths (Daily)" |
-#                   dfm$variable == "COVID-19 Cases: Active" |
-#                   dfm$variable == "COVID-19 Cases: Recovered" | 
-                    dfm$variable == "COVID-19 Cases: Deaths", 
+dfm$topic <- ifelse(dfm$variable == "COVID-19 Cases: Confirmed" |
+                      dfm$variable == "COVID-19 Cases: Confirmed (per 1,000 people)" |
+                      dfm$variable == "COVID-19 Cases: Deaths (per 1,000 people)" |
+                      dfm$variable == "COVID-19 Cases: New Confirmed cases (Daily)" |
+                      dfm$variable == "COVID-19 Cases: New Deaths (Daily)" |
+                      #                   dfm$variable == "COVID-19 Cases: Active" |
+                      #                   dfm$variable == "COVID-19 Cases: Recovered" |
+                      dfm$variable == "COVID-19 Cases: Deaths",
                     "COVID-19", dfm$topic)
 
 ccc <- cc %>%
@@ -126,8 +126,8 @@ ccc <- cc %>%
 
 ## Treemap prep
 fullcd2 <- fullcd %>%
-  merge(unique(dfm[,c('iso3c', 'Region', 'Short Name')]), 
-                 by.x = 'iso', by.y = 'iso3c', all.x = T) %>%
+  merge(unique(dfm[,c('iso3c', 'Region', 'Short Name')]),
+        by.x = 'iso', by.y = 'iso3c', all.x = T) %>%
   filter(!is.na("Short Name"))
 
 fullcd2 <- fullcd2[!is.na(fullcd2$`Short Name`),]
@@ -146,8 +146,8 @@ full_country_data$z <- sin(full_country_data$latitude*pi/180)
 
 full_country_data <- full_country_data[!is.na(full_country_data$x),]
 
-full_country_data <-  full_country_data %>% 
-  group_by(date) %>% 
+full_country_data <-  full_country_data %>%
+  group_by(date) %>%
   mutate(x_newconfirmed = weighted.mean(x, `COVID-19 Cases: New Confirmed cases (Daily)`),
          y_newconfirmed = weighted.mean(y, `COVID-19 Cases: New Confirmed cases (Daily)`),
          z_newconfirmed = weighted.mean(z, `COVID-19 Cases: New Confirmed cases (Daily)`),
@@ -186,79 +186,44 @@ water   <- sort(unique(dfm[dfm$topic == "Water & Sanitation",]$variable))
 
 # Pre-compute new cases ---------------------------------------------------
 
-# changes over time
-cov_ch <- fullcd2 %>%  # COVID changes
-  arrange(iso, variable, date)        %>% 
-  group_by(iso, variable)             %>% 
-  mutate(
-    value_lag = lag(value),             # it is already sorted
-    gr_abs    = value  - value_lag,     # Absolute change (new cases)
-    gr_per    = gr_abs/value_lag,       # Percentage change 
-    gr_per2   = (gr_per/lag(gr_per))-1, # Speed of change
-    status    = gsub("COVID-19 Cases: ", "", variable)
-  )                         %>% 
-  ungroup() %>% 
-  select(-latitude, -longitude)
-
 # Country level
-new_c <- cov_ch %>%  # New cases
-  group_by(iso, variable)             %>% 
-  filter(date == max(date)) %>% 
-  ungroup()                 %>% 
-  select(Region, `Short Name`, status, gr_abs, gr_per, gr_per2)
-
-# Regional level
-new_rg <- new_c %>% 
-  group_by(Region, status) %>% 
-  summarise(
-    gr_abs  = sum(gr_abs), 
-    gr_per  = mean(gr_per), 
-    gr_per2 = mean(gr_per2)
-  ) %>% 
-  ungroup() %>% 
+new_c <- fullcd2 %>%  # New cases
+  arrange(iso, variable, date)        %>%
+  group_by(iso, variable)             %>%
   mutate(
-    `Short Name` = Region   # to append 
-  )
-  
+    new    = value - lag(value,
+                         order_by = date),
+    status = gsub("COVID-19 Cases: ", "", variable)
+  )                         %>%
+  filter(date == max(date)) %>%
+  ungroup()                 %>%
+  select(iso, status, new)
 
 # world level
-new_wl <- new_c    %>% 
-  group_by(status) %>% 
-  summarise(
-    gr_abs  = sum(gr_abs), 
-    gr_per  = mean(gr_per), 
-    gr_per2 = mean(gr_per2)
-  ) %>% 
-  ungroup() %>% 
-  mutate(
-    `Short Name` = "World"   # to append 
-  )
-
-new_all <- new_c %>% 
-  bind_rows(new_rg, new_wl) %>% 
-  mutate(
-    Region = if_else(Region == `Short Name`, 
-                     "World", Region)
-  )
-
+new_wl <- new_c    %>%
+  group_by(status) %>%
+  summarise(con = sum(new))
 
 
 # Save data ---------------------------------------------------------------
 
-fst::write_fst(dfm, "input/prod/dfm.fst")
-fst::write_fst(ccc, "input/prod/ccc.fst")
-fst::write_fst(fullcd2, "input/prod/fullcd2.fst")
-fst::write_fst(wld_data, "input/prod/wld_data.fst")
-fst::write_fst(indicator_list, "input/prod/indicator_list,fst")
-fst::write_fst(new_c, "input/prod/new_c.fst")
-fst::write_fst(new_wl, "input/prod/new_wl.fst")
-fst::write_fst(new_rg, "input/prod/new_rg.fst")
-fst::write_fst(new_all, "input/prod/new_all.fst")
-#fst::write_fst(tmp, "input/prod/temporary_file,fst")
-readr::write_rds(tmp, "input/prod/temporary_file,rds")
-readr::write_rds(age_pop, "input/prod/age_pop.RDS")
-readr::write_rds(covid, "input/prod/covid.RDS")
-readr::write_rds(health, "input/prod/health.RDS")
-readr::write_rds(water, "input/prod/water.RDS")
-readr::write_rds(cg_data, "input/prod/cg_data.RDS")
+# Save data files as .fst files
+# fst_list <- list(dfm, ccc, fullcd2, wld_data, indicator_list, new_c, new_wl)
+# fst_path_list
 
+
+fst::write_fst(dfm, paste0(data_path, "dfm.fst"))
+fst::write_fst(ccc, paste0(data_path, "ccc.fst"))
+fst::write_fst(fullcd2, paste0(data_path, "fullcd2.fst"))
+fst::write_fst(wld_data, paste0(data_path, "wld_data.fst"))
+fst::write_fst(indicator_list, paste0(data_path, "indicator_list,fst"))
+fst::write_fst(new_c, paste0(data_path, "new_c.fst"))
+fst::write_fst(new_wl, paste0(data_path, "new_wl.fst"))
+#fst::write_fst(new_rg, paste0(data_path, "new_rg.fst"))
+#fst::write_fst(new_all, paste0(data_path, "new_all.fst"))
+readr::write_rds(tmp, paste0(data_path, "temporary_file,rds"))
+readr::write_rds(age_pop, paste0(data_path, "age_pop.RDS"))
+readr::write_rds(covid, paste0(data_path, "covid.RDS"))
+readr::write_rds(health, paste0(data_path, "health.RDS"))
+readr::write_rds(water, paste0(data_path, "water.RDS"))
+readr::write_rds(cg_data, paste0(data_path, "cg_data.RDS"))
