@@ -17,6 +17,14 @@ library(wbstats)
 
 source("utils.R")
 
+data_path <- paste0(Sys.getenv("connect_ext_data_folder"), "covid_data/")
+data_path_raw <- paste0(data_path, "input/")
+# Handles both Windows and Linux (RS Connect server)
+if (str_detect(sessioninfo::os_name(), "^Windows")) {
+  data_path <- str_replace(data_path, "^/", "")
+  data_path_raw <- str_replace(data_path, "^/", "")
+}
+
 #--------- make sure everyvody has the required packages
 
 # #CRAN packages
