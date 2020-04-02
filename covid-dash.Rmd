@@ -11,20 +11,37 @@ resource_files:
 ```{r setup, include=FALSE}
 source("styles.R")
 source("00_setup.R")
-# Load data from server
-dfm            <- fst::read_fst(paste0(data_path, "dfm.fst"))
-ccc            <- fst::read_fst(paste0(data_path, "ccc.fst"))
-fullcd2        <- fst::read_fst(paste0(data_path, "fullcd2.fst"))
-wld_data       <- fst::read_fst(paste0(data_path, "wld_data.fst"))
-indicator_list <- fst::read_fst(paste0(data_path, "indicator_list,fst"))
-new_c          <- fst::read_fst(paste0(data_path, "new_c.fst"))
-new_wl         <- fst::read_fst(paste0(data_path, "new_wl.fst"))
-tmp            <- readr::read_rds(paste0(data_path, "temporary_file,rds"))
-age_pop        <- readr::read_rds(paste0(data_path, "age_pop.RDS"))
-covid          <- readr::read_rds(paste0(data_path, "covid.RDS"))
-health         <- readr::read_rds(paste0(data_path, "health.RDS"))
-water          <- readr::read_rds(paste0(data_path, "water.RDS"))
-cg_data        <- readr::read_rds(paste0(data_path, "cg_data.RDS"))
+
+library(pins)
+my_key <- Sys.getenv("connect_key")
+my_server <- "http://localhost:3939/"
+
+# UNCOMMENT FOR LOCAL USE: 
+#my_key <- "YOUR_CONNECT_KEY_FOR_EXTERNAL_SERVER"
+# my_server <- "http://w0lxopshyprd1b.worldbank.org:3939/" # External server
+
+board_register_rsconnect(key    = my_key,
+                         server = my_server)
+
+dfm <- pin_get("dfm", board = "rsconnect")
+ccc <- pin_get("ccc", board = "rsconnect")
+fullcd2 <- pin_get("fullcd2", board = "rsconnect")
+wld_data <- pin_get("wld_data", board = "rsconnect")
+indicator_list <- pin_get("indicator_list", board = "rsconnect")
+new_c <- pin_get("new_c", board = "rsconnect")
+new_wl <- pin_get("new_wl", board = "rsconnect")
+tmp <- pin_get("temporary_file", board = "rsconnect")
+cg_data <- pin_get("cg_data", board = "rsconnect")
+age_pop <- pin_get("age_pop", board = "rsconnect")
+age_pop <- age_pop$age_pop
+covid <- pin_get("covid", board = "rsconnect")
+covid <- covid$covid
+covid_treemap <- covid[!stringr::str_detect(covid, "log scale")]
+health <- pin_get("health", board = "rsconnect")
+health <- health$health
+water <- pin_get("water", board = "rsconnect")
+water <- water$water
+
 
 my_date <- max(wld_data$date)
 my_date2 <- format(as.Date(my_date), format = "%b %d")
@@ -80,7 +97,7 @@ selectInput("variable2",
 
 selectInput("size",
             "Bubble size:",
-            choices = covid,                
+            choices = covid_treemap,                
             selected = "COVID-19 Cases: Confirmed"
 ) 
 
@@ -99,7 +116,7 @@ Row  {data-height=130}
 renderValueBox({
   con <- wld_data %>%
     filter(wld_data$date == max(wld_data$date)) %>%
-    select(`COVID-19 cases: Confirmed`)
+    pull(`COVID-19 cases: Confirmed`) 
   con <- format(con, big.mark=",")
   de <- HTML(paste0("Total cases:<br/>", con))
   valueBox(tags$p(de, style = "font-size: 80%;")
@@ -114,9 +131,8 @@ renderValueBox({
 renderValueBox({
   con <- new_wl %>% 
     filter(status == "Confirmed") %>% 
-    select(con) %>% 
-    pull() %>% 
-    format(big.mark=",")
+    pull(con) %>% 
+    format(big.mark = ",")
   
   de <- HTML(paste0("New cases (", my_date2, "):<br/>", con))
   #de <- str_wrap(de, 15)
@@ -132,8 +148,9 @@ renderValueBox({
 renderValueBox({
   con <- wld_data %>%
     filter(wld_data$date == max(wld_data$date)) %>%
-    select(`COVID-19 cases: Deaths`)
-  con <- format(con, big.mark=",")
+    pull(`COVID-19 cases: Deaths`) %>%
+    format(big.mark = ",")
+  
   de <- HTML(paste0("Total deaths:<br/>", con))
   valueBox(tags$p(de, style = "font-size: 80%;")
            #, 
@@ -264,7 +281,7 @@ dft <- dft    %>%
   # rm(op)
   
   texty <- paste("</br>", dft$`Short Name`,
-                 "</br>Y: ", dft$value, 
+                 "</br>Y: ", round(dft$value, 2), 
                  "</br>Date: ", dft$date)
   
   plot_ly(data = dft,
@@ -357,7 +374,7 @@ Last Updated on: `r today`
 
 radioButtons("var",
              "",
-             choices = covid,  
+             choices = covid_treemap,  
              selected = "COVID-19 Cases: Confirmed"
 )   
 
