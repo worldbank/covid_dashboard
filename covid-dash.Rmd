@@ -4,8 +4,6 @@ runtime: shiny
 output:
   flexdashboard::flex_dashboard:
     orientation: rows
-resource_files:
-- .Renviron
 ---
   
 ```{r setup, include=FALSE}
