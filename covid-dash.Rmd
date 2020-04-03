@@ -18,6 +18,10 @@ my_server <- "http://localhost:3939/"
 #my_key <- Sys.getenv("connect_key_ext")
 #my_server <- "http://w0lxopshyprd1b.worldbank.org:3939/" # External server
 
+# UNCOMMENT FOR INTERNAL LOCAL USE: 
+#my_key <- Sys.getenv("connect_key_int")
+#my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
+
 board_register_rsconnect(key    = my_key,
                          server = my_server)
 
@@ -45,6 +49,8 @@ my_date <- max(wld_data$date)
 my_date2 <- format(as.Date(my_date), format = "%b %d")
 my_date2 <- as.character(my_date2)
 today <- as.Date(my_date) + 1
+
+covidlog <- c("COVID-19 Cases: Confirmed (log scale)", "COVID-19 Cases: Deaths (log scale)")
 
 #--------- filtered cases
 covid <- grep("(Confirmed|Deaths)", covid, value = TRUE)
@@ -200,6 +206,7 @@ renderPlotly ({
                     "</br>X: ", round(df4$mrv2, 1),
                     "</br>Y: ", round(df4$mrv, 1),
                     "</br>Size: ", round(df4$siz, 1))
+     
     
     plot_ly(data = df4) %>%
       add_trace(
@@ -222,13 +229,15 @@ renderPlotly ({
                            orientation = 'h'
                            ),
              annotations = a,
-             xaxis = list(zeroline = FALSE, 
+             xaxis = list(type = if_else(input$variable2 %in% covidlog, "log", "linear"),
+                          zeroline = FALSE, 
                           showline = FALSE, 
                           showgrid = TRUE, 
                           title = str_wrap((input$variable2), 40),
                           range = c(min(df4$variable), max(df4$variable))
                           ),
-             yaxis = list(zeroline = FALSE, 
+             yaxis = list(type = if_else(input$variable %in% covidlog, "log", "linear"),
+                          zeroline = FALSE, 
                           showline = FALSE, 
                           showgrid = TRUE, 
                           title = str_wrap(input$variable, 40),
@@ -304,7 +313,7 @@ dft <- dft    %>%
         showline = FALSE,
         showgrid = TRUE
       ),
-      yaxis = list(
+      yaxis = list(type = if_else(input$variable %in% covidlog, "log", "linear"),
         title = input$variable,
         zeroline = FALSE,
         showline = FALSE,
