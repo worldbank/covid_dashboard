@@ -15,8 +15,8 @@ my_key <- Sys.getenv("connect_key")
 my_server <- "http://localhost:3939/"
 
 # UNCOMMENT FOR LOCAL USE: 
-#my_key <- "YOUR_CONNECT_KEY_FOR_EXTERNAL_SERVER"
-# my_server <- "http://w0lxopshyprd1b.worldbank.org:3939/" # External server
+#my_key <- Sys.getenv("connect_key_ext")
+#my_server <- "http://w0lxopshyprd1b.worldbank.org:3939/" # External server
 
 board_register_rsconnect(key    = my_key,
                          server = my_server)
@@ -198,7 +198,8 @@ renderPlotly ({
     
      texty <- paste("</br>", df4$`Short Name`,
                     "</br>X: ", round(df4$mrv2, 1),
-                    "</br>Y: ", round(df4$mrv, 1))
+                    "</br>Y: ", round(df4$mrv, 1),
+                    "</br>Size: ", round(df4$siz, 1))
     
     plot_ly(data = df4) %>%
       add_trace(
