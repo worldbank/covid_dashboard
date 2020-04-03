@@ -22,11 +22,6 @@ my_server <- "http://localhost:3939/"
 # my_key <- Sys.getenv("connect_key_int")
 # my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
 
-
-# UNCOMMENT FOR INTERNAL LOCAL USE: 
-#my_key <- Sys.getenv("connect_key_int")
-#my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
-
 board_register_rsconnect(key    = my_key,
                          server = my_server)
 
