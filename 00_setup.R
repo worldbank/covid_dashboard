@@ -25,6 +25,9 @@ if (str_detect(sessioninfo::os_name(), "^Windows")) {
   data_path_raw <- str_replace(data_path, "^/", "")
 }
 
+
+
+
 #--------- make sure everyvody has the required packages
 
 # #CRAN packages
