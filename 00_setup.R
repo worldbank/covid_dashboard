@@ -14,6 +14,7 @@ library(fst)
 library(zoo)
 library(curl)
 library(wbstats)
+library(ggiraph)
 
 source("utils.R")
 
