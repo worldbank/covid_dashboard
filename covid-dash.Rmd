@@ -563,9 +563,13 @@ uiOutput("dynamic2")
 output$dynamic2 <- renderUI({
   if (input$tab == "COVID-19 Cases: Confirmed")
   {
-    plotOutput("map1", width = "1024px", height="700px")
+    shinycssloaders::withSpinner(
+      ggiraphOutput("map1", width = "100%", height = "100%")
+    )
   } else {
-    ggiraphOutput("map2", width = "100%", height = "100%")
+    shinycssloaders::withSpinner(
+      ggiraphOutput("map2", width = "100%", height = "100%")
+    )
   }
 })
 
@@ -573,84 +577,39 @@ output$dynamic2 <- renderUI({
 area_df <- pin_get("area-df", board = "rsconnect")
 
 # Map over daily confirmed
-output$map1 <- renderPlot({
-
-  ggplot() +
-    geom_polygon(
-      data = area_df,
-      aes(x = long, y = lat, group = group),
-      color = 'white',
-      size = 0.1
-    ) +
-    theme(
-      panel.background = element_rect(fill = 'white', color = 'white'),
-      legend.text = element_text(size = 14),
-      legend.title = element_text(size = 14)
-    ) +
-    theme(
-      axis.title.x = element_blank(),
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank()
-    ) +
-    theme(
-      axis.title.y = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks.y = element_blank()
-    ) +
-    geom_point(
-      data = cg_data,
-      aes(
-        x = longitude_newconfirmed_rol,
-        y = latitude_newconfirmed_rol,
-        size = total_newconfirmed,
-        color = date
-      )
-    ) +
-    scale_colour_date(low = "#7878FF", high = "#000078") +
-    labs(size = "Daily new cases", color =  "Date") +
-    ggtitle("Center of Gravity of COVID-19 Cases") +
-    theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20))
-
+output$map1 <- renderggiraph({
+  
+  g <- plot_cog_map(mapdf = area_df,
+               cgdf = cg_data,
+               cg_x = longitude_newconfirmed_rol,
+               cg_y = latitude_newconfirmed_rol,
+               cg_size = total_newconfirmed,
+               cg_color = date,
+               cg_tooltip = total_newconfirmed,
+               title = "Center of Gravity of COVID-19 Cases"
+               )
+  
+  girafe(ggobj = g,
+          width_svg = 24, 
+          height_svg = 12)
+  
 })
 
 # Map over daily deaths
 output$map2 <- renderggiraph({
 
-  g <- ggplot() +
-    geom_polygon(
-      data = area_df,
-      aes(x = long, y = lat, group = group),
-      color = 'white',
-      size = 0.1,
-      fill = "grey"
-    ) +
-    geom_point_interactive(
-      data = cg_data,
-      aes(
-        x = longitude_newdeaths_rol,
-        y = latitude_newdeaths_rol,
-        size = total_newdeaths,
-        color = date,
-        alpha = date,
-        tooltip = total_newdeaths
-      )
-    ) +
-    scale_colour_date(low = "#FF7878", high = "#780000") +
-    scale_size_continuous(range = c(1, 10)) +
-    labs(size = "Daily deaths", color = "Date") +
-    theme(
-      panel.background = element_rect(fill = 'white', color = 'white'),
-      legend.text = element_text(size = 14),
-      legend.title = element_text(size = 14),
-      axis.title = element_blank(),
-      axis.text = element_blank(),
-      axis.ticks = element_blank()
-    ) +
-    ggtitle("Center of Gravity of COVID-19 Deaths") +
-    theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20))
+  g <- plot_cog_map(mapdf = area_df,
+               cgdf = cg_data,
+               cg_x = longitude_newdeaths_rol,
+               cg_y = latitude_newdeaths_rol,
+               cg_size = total_newdeaths,
+               cg_color = date,
+               cg_tooltip = total_newdeaths,
+               title = "Center of Gravity of COVID-19 Deaths"
+               )
   
    girafe(ggobj = g,
-          width_svg = 20, 
+          width_svg = 24, 
           height_svg = 12)
 
 })
