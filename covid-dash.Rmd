@@ -586,7 +586,9 @@ output$map1 <- renderggiraph({
                cg_size = total_newconfirmed,
                cg_color = date,
                cg_tooltip = total_newconfirmed,
-               title = "Center of Gravity of COVID-19 Cases"
+               title = "Center of Gravity of COVID-19 Cases",
+               paragraph = "This is a short paragraph explaining how to read a center of gravity map. 
+               Blah blah blah blah blah Blah blah blah blah blah Blah blah blah blah blahBlah blah blah blah blah."
                )
   
   girafe(ggobj = g,
@@ -605,7 +607,9 @@ output$map2 <- renderggiraph({
                cg_size = total_newdeaths,
                cg_color = date,
                cg_tooltip = total_newdeaths,
-               title = "Center of Gravity of COVID-19 Deaths"
+               title = "Center of Gravity of COVID-19 Deaths",
+               paragraph = "This is a short paragraph explaining how to read a center of gravity map.
+               Blah blah blah blah blah Blah blah blah blah blah Blah blah blah blah blahBlah blah blah blah blah."
                )
   
    girafe(ggobj = g,

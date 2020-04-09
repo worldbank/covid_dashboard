@@ -66,6 +66,7 @@ color_map2 <- tibble(
 #' @param cg_color object: Variable to be mapped to color aesthetic
 #' @param cg_tooltip object: Variable to be displayed by tooltip
 #' @param title character: Plot title
+#' @param paragraph character: Explanation paragraph
 #'
 #' @return ggplot
 #' @export
@@ -77,7 +78,10 @@ plot_cog_map <- function(mapdf,
                          cg_size,
                          cg_color,
                          cg_tooltip,
-                         title) {
+                         title,
+                         paragraph) {
+  
+  
   p <- ggplot2::ggplot() +
     ggplot2::geom_polygon(
       data = mapdf,
@@ -94,14 +98,16 @@ plot_cog_map <- function(mapdf,
         size = {{cg_size}},
         alpha = {{cg_color}},
         color = {{cg_color}},
-        tooltip = paste("Value:", {{cg_tooltip}},
-                        "<br />Year:", {{cg_color}})
+        tooltip = paste("Value:", scales::comma({{cg_tooltip}}, accuracy = 1, big.mark = " "),
+                        "<br />Date:", {{cg_color}})
       )
     ) +
     ggplot2::scale_colour_date(low = "#FF7878", high = "#780000") +
     ggplot2::scale_size_continuous(range = c(1, 10)) +
     ggplot2::labs(size = "Daily deaths", color = "Date") +
-    ggplot2::guides(alpha = FALSE, size = FALSE, color = FALSE) +
+    ggplot2::guides(#alpha = ggplot2::guide_legend("Date"), 
+                    #color = ggplot2::guide_legend("Date"),
+                    size = FALSE, alpha = FALSE) +
     ggplot2::theme(
       panel.background = ggplot2::element_rect(fill = 'white', color = 'white'),
       legend.text = ggplot2::element_text(size = 14),
@@ -111,10 +117,29 @@ plot_cog_map <- function(mapdf,
       axis.ticks = ggplot2::element_blank()
     ) +
     ggplot2::ggtitle(title) +
+    ggplot2::annotate(
+      geom = "text",
+      x = -150,
+      y = -10,
+      size = rel(6),
+      label = wrapper({{paragraph}}, width = 40),
+      hjust = 0
+    ) +
+    ggplot2::annotate(
+      geom = "curve", x = 150, y = 50, xend = 118, yend = 40, 
+      curvature = .3, arrow = arrow(length = unit(2, "mm"))
+    ) +
+    annotate(geom = "text", x = 150 + 1, y = 50 - 2, 
+             label = "Initial outbreak", vjust = "bottom", hjust = "left", 
+             fontface = "bold", size = rel(6)) +
     ggplot2::theme(
       plot.title = ggplot2::element_text(hjust = 0.5, face = "bold", size = 20),
-      legend.position = "bottom")
+      legend.position = c(.95, .4),
+      legend.text = element_text(face = "bold", size = rel(1.5)),
+      legend.title = element_text(face = "bold", size = rel(1.5))
+    )
   
   return(p)
 }
 
+wrapper <- function(x, ...) paste(strwrap(x, ...), collapse = "\n")
