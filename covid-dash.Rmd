@@ -38,7 +38,9 @@ age_pop <- pin_get("age_pop", board = "rsconnect")
 age_pop <- age_pop$age_pop
 covid <- pin_get("covid", board = "rsconnect")
 covid <- covid$covid
-covid_treemap <- covid[!stringr::str_detect(covid, "log scale")]
+covidlog <- covid[stringr::str_detect(covid, "log scale")]
+covidbubble <- covid[!stringr::str_detect(covid, "log scale")]
+covid_treemap <- covid[!stringr::str_detect(covid, paste(c("log scale", "Fatality", "per 1,000 people"),collapse = '|'))]
 health <- pin_get("health", board = "rsconnect")
 health <- health$health
 water <- pin_get("water", board = "rsconnect")
@@ -50,7 +52,7 @@ my_date2 <- format(as.Date(my_date), format = "%b %d")
 my_date2 <- as.character(my_date2)
 today <- as.Date(my_date) + 1
 
-covidlog <- c("COVID-19 Cases: Confirmed (log scale)", "COVID-19 Cases: Deaths (log scale)")
+#covidlog <- c("COVID-19 Cases: Confirmed (log scale)", "COVID-19 Cases: Deaths (log scale)")
 
 #--------- filtered cases
 covid <- grep("(Confirmed|Deaths)", covid, value = TRUE)
@@ -101,7 +103,7 @@ selectInput("variable2",
 
 selectInput("size",
             "Bubble size:",
-            choices = covid_treemap,                
+            choices = covidbubble,                
             selected = "COVID-19 Cases: Confirmed"
 ) 
 
@@ -109,7 +111,7 @@ selectizeInput("Country Name",
                "Country (compare countries over time):",
                c(unique(as.character(dfm$`Short Name`))),
                multiple = TRUE, 
-               selected = c("China", "Italy", "United States", "Spain", "Iran")
+               selected = c("China", "Italy", "United States", "Spain", "Germany", "France")
 )
 ```
 
