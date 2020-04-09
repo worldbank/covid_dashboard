@@ -38,6 +38,17 @@ age_pop <- pin_get("age_pop", board = "rsconnect")
 age_pop <- age_pop$age_pop
 covid <- pin_get("covid", board = "rsconnect")
 covid <- covid$covid
+covid <- c( "COVID-19 Cases: Case Fatality Rate",
+            "COVID-19 Cases: Confirmed",
+            "COVID-19 Cases: Confirmed (log scale)",
+            "COVID-19 Cases: Confirmed (per 1,000 people)",
+            "COVID-19 Cases: Confirmed (per 1,000 people, log scale)",
+            "COVID-19 Cases: Deaths",
+            "COVID-19 Cases: Deaths (log scale)",
+            "COVID-19 Cases: Deaths (per 1,000 people)",
+            "COVID-19 Cases: Deaths (per 1,000 people, log scale)",
+            "COVID-19 Cases: New Confirmed cases (Daily)",
+            "COVID-19 Cases: New Deaths (Daily)")
 covidlog <- covid[stringr::str_detect(covid, "log scale")]
 covidbubble <- covid[!stringr::str_detect(covid, "log scale")]
 covid_treemap <- covid[!stringr::str_detect(covid, paste(c("log scale", "Fatality", "per 1,000 people"),collapse = '|'))]
