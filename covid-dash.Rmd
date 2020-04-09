@@ -63,8 +63,6 @@ my_date2 <- format(as.Date(my_date), format = "%b %d")
 my_date2 <- as.character(my_date2)
 today <- as.Date(my_date) + 1
 
-#covidlog <- c("COVID-19 Cases: Confirmed (log scale)", "COVID-19 Cases: Deaths (log scale)")
-
 #--------- filtered cases
 covid <- grep("(Confirmed|Deaths)", covid, value = TRUE)
 
