@@ -19,8 +19,8 @@ my_key <- Sys.getenv("connect_key_ext")
 my_server <- "http://w0lxopshyprd1b.worldbank.org:3939/" # External server
 
 # UNCOMMENT FOR LOCAL USE with INTERNAL server:
-# my_key <- Sys.getenv("connect_key_int")
-# my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
+ my_key <- Sys.getenv("connect_key_int")
+ my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
 
 board_register_rsconnect(key    = my_key,
                          server = my_server)
@@ -78,6 +78,8 @@ cty_color <-  setNames(
 )
 
 
+income <- c("Income level")
+
 ```
 
 
@@ -110,10 +112,16 @@ selectInput("variable2",
             selected = "Population ages 65 and above (% of total)"
 ) 
 
-selectInput("size",
-            "Bubble size:",
-            choices = covidbubble,                
-            selected = "COVID-19 Cases: Confirmed"
+#selectInput("size",
+#            "Bubble size:",
+#            choices = covidbubble,                
+#            selected = "COVID-19 Cases: Confirmed"
+#) 
+
+radioButtons("color",
+             "Bubble color (click on legend items to exclude selected category):",
+             choices = c("Income Group", "Region"),  
+             selected = "Income Group"
 ) 
 
 selectizeInput("Country Name",
@@ -183,7 +191,7 @@ renderPlotly ({
   
   df2 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable, ]
   df3 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable2, c(1, 6)]
-  dfs <- dfm[dfm$date == 2019 & dfm$variable %in% input$size, c(1, 6)]
+  dfs <- dfm[dfm$date == 2019 & dfm$variable %in% "COVID-19 Cases: Deaths", c(1, 6)]
    
     dfs <- dfs %>%
           rename("siz" = "mrv")
@@ -208,28 +216,41 @@ renderPlotly ({
               font = list(color = "dark grey", size = 14)
               )
     
-    df4 <- df4 %>% 
-      mutate(
-        opacity = if_else(`Short Name` %in% input$`Country Name`, 0.95, 0.3)
-      )
     
      texty <- paste("</br>", df4$`Short Name`,
                     "</br>X: ", round(df4$mrv2, 1),
-                    "</br>Y: ", round(df4$mrv, 1),
-                    "</br>Size: ", round(df4$siz, 1))
+                    "</br>Y: ", round(df4$mrv, 1))
      
     
+    df4$`Income Group` <- ordered(df4$`Income Group`, 
+                                  levels = c("Low income", 
+                                             "Lower middle income",
+                                             "Upper middle income", 
+                                             "High income"))
+    
+    if (input$color == "Income Group"){
+    df4$colort <- df4$`Income Group`
+  } else {
+    df4$colort <- df4$Region
+  }
+    
+      if (input$color == "Income Group"){
+    colorpal <- inc_color
+  } else {
+    colorpal <- reg_color
+  }  
+
     plot_ly(data = df4) %>%
       add_trace(
         x = ~ mrv2,
         y = ~ mrv,
         type = 'scatter',
         mode = 'markers',
-        color = ~Region,
-        colors = reg_color,
+        color =  ~colort,
+        colors = ~colorpal,
         opacity = 0.9,
-        size   = ~siz,
-        sizes  = c(20, 100),
+       # size   = ~siz,
+      #  sizes  = c(20, 100),
       hoverinfo = 'text',
       text = ~ texty
       ) %>%
@@ -289,15 +310,6 @@ dft <- dft    %>%
     colors = rep(palette, ceil(nrow(.)/length(palette)))[1:nrow(.)]
   )  
   
-  # op <- dft %>% 
-  #   group_by(`Short Name`) %>% 
-  #   summarise(opacity = mean(opacity))
-  # 
-  # opacity  <- setNames(
-  #   op$opacity,
-  #   op$`Short Name`
-  # )
-  # rm(op)
   
   texty <- paste("</br>", dft$`Short Name`,
                  "</br>Y: ", round(dft$value, 2), 
@@ -403,54 +415,6 @@ getind <- reactive({
 
 ```
 
-<!-- Row  {data-height=130} -->
-  <!-- ----------------------------------------------------------------------- -->
-  <!-- ### Selected country, `r my_date` -->
-  <!-- ```{r} -->
-  
-  <!-- renderValueBox({ -->
-      <!--     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Confirmed" & -->
-                                 <!--                    fullcd2$date == max(fullcd2$date) & -->
-                                 <!--                    fullcd2$`Short Name` == input$Country), "value"] -->
-        <!--     con <- format(con, big.mark=",") -->
-          <!--     de <- paste0("Confirmed: ", con) -->
-            <!--   valueBox(tags$p(de, style = "font-size: 80%;") -->
-                              <!--            #, -->
-                              <!--            #icon = "fa-users" -->
-                              <!--            ) -->
-            <!-- }) -->
-  <!-- ``` -->
-  
-  <!-- ### Selected country, `r my_date` -->
-  <!-- ```{r} -->
-  <!-- renderValueBox({ -->
-      <!--     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Active" & -->
-                                 <!--                    fullcd2$date == max(fullcd2$date) & -->
-                                 <!--                    fullcd2$`Short Name` == input$Country), "value"] -->
-        <!--     con <- format(con, big.mark=",") -->
-          <!--     de <- paste0("Active: ", con) -->
-            <!--   valueBox(tags$p(de, style = "font-size: 80%;") -->
-                              <!--            #, -->
-                              <!--            #icon = "fa-users" -->
-                              <!--            ) -->
-            <!-- }) -->
-  <!-- ``` -->
-  
-  <!-- ### Selected country, `r my_date` -->
-  <!-- ```{r} -->
-  <!-- renderValueBox({ -->
-      <!--     con <- fullcd2[(fullcd2$variable == "COVID-19 Cases: Deaths" & -->
-                                 <!--                    fullcd2$date == max(fullcd2$date) & -->
-                                 <!--                    fullcd2$`Short Name` == input$Country), "value"] -->
-        <!--     con <- format(con, big.mark=",") -->
-          <!--     de <- paste0("Deaths: ", con) -->
-            <!--   valueBox(tags$p(de, style = "font-size: 80%;") -->
-                              <!--            #, -->
-                              <!--            #icon = "fa-users" -->
-                              <!--            ) -->
-            <!-- }) -->
-  <!-- ``` -->
-  
 Row
 -----------------------------------------------------------------------
 ### `r renderText(getind())`
@@ -548,120 +512,3 @@ renderPlotly({
 
 
 ```
-
-
-<!-- Center of gravity -->
-<!-- ===================================== -->
-
-<!-- Sidebar { .sidebar data-width=250} -->
-<!-- ----------------------------------------------------------------------- -->
-
-<!-- ```{r} -->
-
-<!-- radioButtons("tab", "Type:", -->
-<!--              c("COVID-19 Cases: Confirmed", -->
-<!--                "COVID-19 Cases: Deaths") -->
-<!-- ) -->
-<!-- ```   -->
-
-<!-- Row  {data-height=500} -->
-<!-- ----------------------------------------------------------------------- -->
-
-<!-- ```{r} -->
-<!-- uiOutput("dynamic2") -->
-
-<!-- output$dynamic2 <- renderUI({ -->
-<!--   if (input$tab == "COVID-19 Cases: Confirmed") -->
-<!--   { -->
-<!--     plotOutput("map1", width = "1024px", height="700px") -->
-<!--   } else { -->
-<!--     plotOutput("map2", width = "800px", height="600px" ) -->
-<!--   } -->
-<!-- }) -->
-
-<!-- # Loading global shapefile converted into rda -->
-<!-- load(file = "input/area_df.rda") -->
-
-<!-- # Map over daily confirmed -->
-<!-- output$map1 <- renderPlot({ -->
-
-<!--   ggplot() + -->
-<!--     geom_polygon( -->
-<!--       data = area_df, -->
-<!--       aes(x = long, y = lat, group = group), -->
-<!--       color = 'white', -->
-<!--       size = 0.1 -->
-<!--     ) + -->
-<!--     theme( -->
-<!--       panel.background = element_rect(fill = 'white', color = 'white'), -->
-<!--       legend.text = element_text(size = 14), -->
-<!--       legend.title = element_text(size = 14) -->
-<!--     ) + -->
-<!--     theme( -->
-<!--       axis.title.x = element_blank(), -->
-<!--       axis.text.x = element_blank(), -->
-<!--       axis.ticks.x = element_blank() -->
-<!--     ) + -->
-<!--     theme( -->
-<!--       axis.title.y = element_blank(), -->
-<!--       axis.text.y = element_blank(), -->
-<!--       axis.ticks.y = element_blank() -->
-<!--     ) + -->
-<!--     geom_point( -->
-<!--       data = cg_data, -->
-<!--       aes( -->
-<!--         x = longitude_newconfirmed_rol, -->
-<!--         y = latitude_newconfirmed_rol, -->
-<!--         size = total_newconfirmed, -->
-<!--         color = date -->
-<!--       ) -->
-<!--     ) + -->
-<!--     scale_colour_date(low = "#7878FF", high = "#000078") +  -->
-<!--     labs(size = "Daily new cases", color =  "Date") + -->
-<!--     ggtitle("Center of Gravity of COVID-19 Cases") +  -->
-<!--     theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20)) -->
-
-<!-- })  -->
-
-<!-- # Map over daily deaths -->
-<!-- output$map2 <- renderPlot({ -->
-
-<!--   ggplot() + -->
-<!--     geom_polygon( -->
-<!--       data = area_df, -->
-<!--       aes(x = long, y = lat, group = group), -->
-<!--       color = 'white', -->
-<!--       size = 0.1 -->
-<!--     ) + -->
-<!--     theme( -->
-<!--       panel.background = element_rect(fill = 'white', color = 'white'), -->
-<!--       legend.text = element_text(size = 14), -->
-<!--       legend.title = element_text(size = 14) -->
-<!--     ) + -->
-<!--     theme( -->
-<!--       axis.title.x = element_blank(), -->
-<!--       axis.text.x = element_blank(), -->
-<!--       axis.ticks.x = element_blank() -->
-<!--     ) + -->
-<!--     theme( -->
-<!--       axis.title.y = element_blank(), -->
-<!--       axis.text.y = element_blank(), -->
-<!--       axis.ticks.y = element_blank() -->
-<!--     ) + -->
-<!--     geom_point( -->
-<!--       data = cg_data, -->
-<!--       aes( -->
-<!--         x = longitude_newdeaths_rol, -->
-<!--         y = latitude_newdeaths_rol, -->
-<!--         size = total_newdeaths, -->
-<!--         color = date -->
-<!--       ) -->
-<!--     ) + -->
-<!--     scale_colour_date(low = "#FF7878", high = "#780000") +  -->
-<!--     labs(size = "Daily deaths", color = "Date") + -->
-<!--     ggtitle("Center of Gravity of COVID-19 Deaths") +  -->
-<!--     theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 20)) -->
-
-<!-- }) -->
-
-<!-- ``` -->
