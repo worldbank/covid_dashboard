@@ -41,6 +41,13 @@ reg_color   <- setNames(
   regions
 )
 
+inc_color   <- c(
+  "Low income" = "#1b9e77", 
+  "Lower middle income" = "#d95f02",
+  "Upper middle income" = "#7570b3", 
+  "High income" = "#1f78b4")
+
+
 color_map <- c(
   `South Asia`                 = "#055bb3",
   `Sub-Saharan Africa`         = "#fdb714",
