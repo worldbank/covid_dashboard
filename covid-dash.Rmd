@@ -77,90 +77,6 @@ cty_color <-  setNames(
   uniq_cty
 )
 
-#---------- prep for pyramid chart
-
-# library(wbstats)
-# library(dplyr)
-# library(plotly)
-# 
-# #indicators1 <- c("SP.POP.TOTL", "SP.DYN.CDRT.IN", "SP.DYN.CBRT.IN")
-# #indicators2 <- c("SP.POP.GROW", "SP.DYN.CDRT.IN", "SP.DYN.CBRT.IN")
-# indicators1 <- c("SP.POP.0004.MA.5Y", "SP.POP.1014.MA.5Y", "SP.POP.0509.MA.5Y", 
-#                  "SP.POP.1519.MA.5Y", "SP.POP.2024.MA.5Y", "SP.POP.2529.MA.5Y",
-#                  "SP.POP.3034.MA.5Y", "SP.POP.3539.MA.5Y", "SP.POP.4044.MA.5Y",
-#                  "SP.POP.4549.MA.5Y", "SP.POP.5054.MA.5Y", "SP.POP.5559.MA.5Y",
-#                  "SP.POP.6064.MA.5Y", "SP.POP.6569.MA.5Y", "SP.POP.7074.MA.5Y",
-#                  "SP.POP.7579.MA.5Y", "SP.POP.80UP.MA.5Y")
-# 
-# indicators2 <- c("SP.POP.0004.FE.5Y",  "SP.POP.1014.FE.5Y", "SP.POP.0509.FE.5Y", 
-#                  "SP.POP.1519.FE.5Y", "SP.POP.2024.FE.5Y", "SP.POP.2529.FE.5Y", 
-#                  "SP.POP.3034.FE.5Y", "SP.POP.3539.FE.5Y", "SP.POP.4044.FE.5Y", 
-#                  "SP.POP.4549.FE.5Y", "SP.POP.5054.FE.5Y", "SP.POP.5559.FE.5Y", 
-#                  "SP.POP.6064.FE.5Y", "SP.POP.6569.FE.5Y", "SP.POP.7074.FE.5Y", 
-#                  "SP.POP.7579.FE.5Y", "SP.POP.80UP.FE.5Y")
-# 
-# indicators <- c("SP.POP.TOTL.MA.IN", "SP.POP.TOTL.FE.IN")
-# 
-# df1 <- wb(
-#   c("LIC", "LMC", "UMC", "HIC"),
-#   indicator = indicators1,
-#   startdate = 2018,
-#   enddate = 2018,
-#   return_wide = FALSE
-#   )
-#   
-# df2 <- wb(
-#   c("LIC", "LMC", "UMC", "HIC"),
-#   indicator = indicators2,
-#   startdate = 2018,
-#   enddate = 2018,
-#   return_wide = FALSE
-# )
-#   
-# df3 <- wb(
-#   c("LIC", "LMC", "UMC", "HIC"),
-#   indicator = indicators,
-#   startdate = 2018,
-#   enddate = 2018,
-#   return_wide = TRUE
-# ) %>%
-#   select("iso3c", "SP.POP.TOTL.MA.IN", "SP.POP.TOTL.FE.IN")
-#   
-#   df1 <- merge(df1, df3, "iso3c")
-#   df1$value2 <- (df1$value * df1$SP.POP.TOTL.MA.IN)/100
-#   
-#   df2 <- merge(df2, df3, "iso3c")
-#   df2$value2 <- (df1$value * df1$SP.POP.TOTL.FE.IN)/100
-#   
-#   df <- rbind(df1, df2)
-#   
-#   df$gender <- substr(df$indicatorID, 13, 14)
-#   df$startage <- substr(df$indicatorID, 8, 9)
-#   df$endage <- substr(df$indicatorID, 10, 11)
-#   df$age <- paste0(df$startage, "-", df$endage)
-#   df$age[df$age == "80-UP"] <- "80+"
-#   
-#   df$age <- as.factor(df$age)
-# 
-#   df$value3 <- ifelse(df$gender == "MA", df$value2*-1, df$value2)
-#   
-#    pyr <- function(x) {
-#     
-#     dflic <-  df[df$iso3c == x,]
-#     
-#     plot_ly(dflic, x = ~value3, y = ~age, color = ~gender) %>%
-#       add_bars(orientation = "h",
-#                hoverinfo = "text", text = paste('</br> Age group:', dflic$age,
-#                                                 '</br> Population:', round((dflic$value2)/1000000,1), "million"), 
-#                colors = c("#00a996", "orange")) %>%
-#       layout(bargap = 0.1, barmode = "overlay", 
-#              title = "", 
-#              xaxis = list(tickmode = "array", 
-#                           title = "Population (millions)"), 
-#              yaxis = list(title = "")) 
-#     
-#     
-#   }
 
 income <- c("Income level")
 
@@ -300,10 +216,6 @@ renderPlotly ({
               font = list(color = "dark grey", size = 14)
               )
     
-    #df4 <- df4 %>% 
-    #  mutate(
-    #    opacity = if_else(`Short Name` %in% input$`Country Name`, 0.95, 0.3)
-    #  )
     
      texty <- paste("</br>", df4$`Short Name`,
                     "</br>X: ", round(df4$mrv2, 1),
@@ -337,8 +249,8 @@ renderPlotly ({
         color =  ~colort,
         colors = ~colorpal,
         opacity = 0.9,
-        size   = ~siz,
-        sizes  = c(20, 100),
+       # size   = ~siz,
+      #  sizes  = c(20, 100),
       hoverinfo = 'text',
       text = ~ texty
       ) %>%
@@ -398,15 +310,6 @@ dft <- dft    %>%
     colors = rep(palette, ceil(nrow(.)/length(palette)))[1:nrow(.)]
   )  
   
-  # op <- dft %>% 
-  #   group_by(`Short Name`) %>% 
-  #   summarise(opacity = mean(opacity))
-  # 
-  # opacity  <- setNames(
-  #   op$opacity,
-  #   op$`Short Name`
-  # )
-  # rm(op)
   
   texty <- paste("</br>", dft$`Short Name`,
                  "</br>Y: ", round(dft$value, 2), 
@@ -609,103 +512,3 @@ renderPlotly({
 
 
 ```
-
-
-<!-- Risk comparison -->
-<!-- ===================================== -->
-<!-- Sidebar { .sidebar data-width=250} -->
-<!-- ----------------------------------------------------------------------- -->
-<!-- Last Updated on: `r today` -->
-
-<!-- ```{r} -->
-
-<!-- radioButtons("type", -->
-<!--              "", -->
-<!--              choices = c("Population", "Health"),   -->
-<!--              selected = "Population" -->
-<!-- )    -->
-
-<!-- ``` -->
-
-<!-- Row -->
-<!-- ----------------------------------------------------------------------- -->
-<!-- ### Low income -->
-<!-- ```{r} -->
-<!-- uiOutput("dynamic2") -->
-
-<!-- output$dynamic2 <- renderUI({  -->
-<!--    if (input$type == "Population") -->
-<!--    { -->
-<!--      plotlyOutput("pop1") -->
-<!--    } else { -->
-<!--      plotlyOutput("pop2") -->
-<!--    }  -->
-<!--  })  -->
-
-<!-- output$pop1 <- renderPlotly({ -->
-
-<!-- lic <-   pyr("LIC")   -->
-<!-- lic -->
-
-<!-- }) -->
-
-<!-- output$pop2 <- renderPlotly({ -->
-
-<!-- hic <-   pyr("HIC")   -->
-<!-- hic -->
-
-<!-- }) -->
-
-<!-- ``` -->
-
-<!-- ### Lower-middle income -->
-<!-- ```{r} -->
-
-<!-- uiOutput("dynamic3") -->
-
-<!-- output$dynamic3 <- renderUI({  -->
-<!--    if (input$type == "Population") -->
-<!--    { -->
-<!--      plotlyOutput("pop3") -->
-<!--    } else { -->
-<!--      NULL -->
-<!--         }  -->
-<!--  })  -->
-
-<!-- output$pop3 <- renderPlotly({ -->
-
-<!-- lmc <-   pyr("LMC")   -->
-
-<!-- lmc -->
-
-<!-- }) -->
-
-<!-- ``` -->
-
-<!-- Row -->
-<!-- ----------------------------------------------------------------------- -->
-<!-- ### Upper-middle income -->
-<!-- ```{r} -->
-
-<!-- renderPlotly({ -->
-
-<!-- umc <-   pyr("UMC")   -->
-
-<!-- umc -->
-
-<!-- }) -->
-
-<!-- ``` -->
-
-<!-- ### High income -->
-<!-- ```{r} -->
-
-<!-- renderPlotly({ -->
-
-<!-- hic <-   pyr("HIC")   -->
-
-<!-- hic -->
-
-<!-- }) -->
-
-<!-- ``` -->
