@@ -14,9 +14,9 @@ library(pins)
 my_key <- Sys.getenv("connect_key")
 my_server <- "http://localhost:3939/"
 
-# UNCOMMENT FOR LOCAL USE with EXTERNAL server: 
-# my_key <- Sys.getenv("connect_key_ext")
-# my_server <- "http://w0lxopshyprd1b.worldbank.org:3939/" # External server
+# UNCOMMENT FOR LOCAL USE with EXTERNAL server:
+my_key <- Sys.getenv("connect_key_ext")
+my_server <- "http://w0lxopshyprd1b.worldbank.org:3939/" # External server
 
 # UNCOMMENT FOR LOCAL USE with INTERNAL server:
 # my_key <- Sys.getenv("connect_key_int")
@@ -73,7 +73,7 @@ covid <- grep("(Confirmed|Deaths)", covid, value = TRUE)
 uniq_cty <- unique(fullcd2$`Short Name`)
 
 cty_color <-  setNames(
-  rep(palette, ceil(length(uniq_cty)/length(palette)))[1:length(uniq_cty)],
+  rep(palette, ceiling(length(uniq_cty)/length(palette)))[1:length(uniq_cty)],
   uniq_cty
 )
 
