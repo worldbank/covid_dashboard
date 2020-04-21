@@ -409,12 +409,12 @@ radioButtons("var",
              selected = "COVID-19 Cases: Confirmed"
 )  
 
-sliderInput("date",
-            "Day:",
-            min = min(treemap$date, na.rm = TRUE),
-            max = max(treemap$date, na.rm = TRUE),
-            value = max(treemap$date, na.rm = TRUE),
-            timeFormat="%Y-%m-%d")
+# sliderInput("date",
+#             "Day:",
+#             min = min(treemap$date, na.rm = TRUE),
+#             max = max(treemap$date, na.rm = TRUE),
+#             value = max(treemap$date, na.rm = TRUE),
+#             timeFormat="%Y-%m-%d")
 
 getind <- reactive({
   input$var
@@ -431,8 +431,11 @@ renderPlotly({
   
   tmp <- treemap %>%
     filter(variable %in% input$var,
-           date == input$date) %>%
-           #date == max(date, na.rm = TRUE)) %>% 
+           date == max(date, na.rm = TRUE)) %>%
+  #   filter(variable %in% input$var)
+  # tmp$value[tmp$ids == "World"] <- tmp$value[tmp$ids == "World" & tmp$date == max(tmp$date, na.rm = TRUE)]
+  # tmp <- tmp %>%
+  #   filter(date == input$date) %>%
     left_join(color_map2, by = c("labels" = "Region")) 
   
   tmp %>% plot_ly(
@@ -441,12 +444,12 @@ renderPlotly({
     labels = ~labels,
     parents = ~parents,
     values = ~ value,
-    branchvalues = list("total"),
+    branchvalues = "total",
     marker  = list(colors = ~color),
-    domain = list(column=0)) %>% 
-    add_trace(
-      branchvalues = "total"
-    )
+    domain = list(column=0))# %>% 
+    # add_trace(
+    #   branchvalues = "total"
+    # )
   
 })
 
