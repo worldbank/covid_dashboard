@@ -11,6 +11,7 @@ source("styles.R")
 source("00_setup.R")
 
 library(pins)
+library(RColorBrewer)
 my_key <- Sys.getenv("connect_key")
 my_server <- "http://localhost:3939/"
 
@@ -128,6 +129,7 @@ selectizeInput("Country Name",
                "Country (compare countries over time):",
                c(unique(as.character(dfm$`Short Name`))),
                multiple = TRUE, 
+               options = list(maxItems = 12),
                selected = c("China", "Italy", "United States", "Spain", "Germany", "France")
 )
 ```
@@ -237,7 +239,7 @@ renderPlotly ({
       if (input$color == "Income Group"){
     colorpal <- inc_color
   } else {
-    colorpal <- reg_color
+    colorpal <- brewer.pal(7, "Paired")
   }  
 
     plot_ly(data = df4) %>%
@@ -249,7 +251,7 @@ renderPlotly ({
         color =  ~colort,
         colors = ~colorpal,
         opacity = 0.9,
-       # size   = ~siz,
+        size   = 15,
       #  sizes  = c(20, 100),
       hoverinfo = 'text',
       text = ~ texty
@@ -324,7 +326,7 @@ dft <- dft    %>%
       type  = 'scatter',
       mode  = 'lines+markers', 
       color = ~`Short Name`,
-      colors = cty_color,
+      colors = brewer.pal(12, "Paired"),
       hoverinfo = 'text',
       text = ~ texty
     ) %>%
@@ -373,7 +375,7 @@ output$plot2 <- renderPlotly({
       type = 'scatter',
       mode = 'lines+markers',
       color = ~`Short Name`,
-      colors = cty_color,
+      colors = brewer.pal(12, "Paired"),
       hoverinfo = 'text',
       text = ~ texty
     ) %>%

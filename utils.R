@@ -42,10 +42,10 @@ reg_color   <- setNames(
 )
 
 inc_color   <- c(
-  "Low income" = "#1b9e77", 
-  "Lower middle income" = "#d95f02",
-  "Upper middle income" = "#7570b3", 
-  "High income" = "#1f78b4")
+  "Low income" = "#D81B60", 
+  "Lower middle income" = "#1E88E5",
+  "Upper middle income" = "#FFC107", 
+  "High income" = "#004D40")
 
 
 color_map <- c(
