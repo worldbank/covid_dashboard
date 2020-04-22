@@ -14,13 +14,13 @@ library(pins)
 my_key <- Sys.getenv("connect_key")
 my_server <- "http://localhost:3939/"
 
-# UNCOMMENT FOR LOCAL USE with EXTERNAL server: 
+# UNCOMMENT FOR LOCAL USE with EXTERNAL server:
 # my_key <- Sys.getenv("connect_key_ext")
 # my_server <- "http://w0lxopshyprd1b.worldbank.org:3939/" # External server
 
 # UNCOMMENT FOR LOCAL USE with INTERNAL server:
- my_key <- Sys.getenv("connect_key_int")
- my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
+ # my_key <- Sys.getenv("connect_key_int")
+ # my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
 
 board_register_rsconnect(key    = my_key,
                          server = my_server)
@@ -28,12 +28,12 @@ board_register_rsconnect(key    = my_key,
 dfm <- pin_get("dfm", board = "rsconnect")
 ccc <- pin_get("ccc", board = "rsconnect")
 fullcd2 <- pin_get("fullcd2", board = "rsconnect")
+treemap <- pin_get("treemap_data", board = "rsconnect")
 wld_data <- pin_get("wld_data", board = "rsconnect")
 indicator_list <- pin_get("indicator_list", board = "rsconnect")
 new_c <- pin_get("new_c", board = "rsconnect")
 new_wl <- pin_get("new_wl", board = "rsconnect")
-tmp <- pin_get("temporary_file", board = "rsconnect")
-cg_data <- pin_get("cg_data", board = "rsconnect")
+#cg_data <- pin_get("cg_data", board = "rsconnect")
 age_pop <- pin_get("age_pop", board = "rsconnect")
 age_pop <- age_pop$age_pop
 covid <- pin_get("covid", board = "rsconnect")
@@ -73,7 +73,7 @@ covid <- grep("(Confirmed|Deaths)", covid, value = TRUE)
 uniq_cty <- unique(fullcd2$`Short Name`)
 
 cty_color <-  setNames(
-  rep(palette, ceil(length(uniq_cty)/length(palette)))[1:length(uniq_cty)],
+  rep(palette, ceiling(length(uniq_cty)/length(palette)))[1:length(uniq_cty)],
   uniq_cty
 )
 
@@ -407,7 +407,14 @@ radioButtons("var",
              "",
              choices = covid_treemap,  
              selected = "COVID-19 Cases: Confirmed"
-)   
+)  
+
+# sliderInput("date",
+#             "Day:",
+#             min = min(treemap$date, na.rm = TRUE),
+#             max = max(treemap$date, na.rm = TRUE),
+#             value = max(treemap$date, na.rm = TRUE),
+#             timeFormat="%Y-%m-%d")
 
 getind <- reactive({
   input$var
@@ -422,44 +429,27 @@ Row
 ```{r}
 renderPlotly({
   
-  tmp <- fullcd2[(fullcd2$variable %in% input$var),]  
+  tmp <- treemap %>%
+    filter(variable %in% input$var,
+           date == max(date, na.rm = TRUE)) %>%
+  #   filter(variable %in% input$var)
+  # tmp$value[tmp$ids == "World"] <- tmp$value[tmp$ids == "World" & tmp$date == max(tmp$date, na.rm = TRUE)]
+  # tmp <- tmp %>%
+  #   filter(date == input$date) %>%
+    left_join(color_map2, by = c("labels" = "Region")) 
   
-  tmp <- tmp[tmp$date == max(tmp$date),]
-  tmp <- tmp[!is.na(tmp$Region),]
-  
-  # Compute regional aggregates
-  tmp2 <- tmp %>%
-    select(Region) %>%
-    distinct() %>%
-    mutate(
-      `Short Name` = unique(Region),
-      Region = "World",
-      value = 0
-    )
-  
-  # Combine Regional aggregates with country level data
-  tmp3 <- bind_rows(tmp, tmp2) %>%
-    select(Region, `Short Name`, value) %>%
-    filter(
-      Region %in% c("World", "Europe & Central Asia", "East Asia & Pacific", 
-                    "North America", "Middle East & North Africa", "Latin America & Caribbean", 
-                    "South Asia", "Sub-Saharan Africa")
-    ) %>% 
-    left_join(color_map2) %>% 
-    left_join(color_map2, by = c("Short Name" = "Region")) %>% 
-    mutate(
-      color = if_else(is.na(color.x), color.y, color.x)
-    ) %>% 
-    select(-color.x, -color.y)
-  
-  tmp3 %>%
-    plot_ly( 
-      type    = "treemap",
-      labels  = ~`Short Name`,
-      parents = ~Region,
-      values  = ~value,
-      marker  = list(colors = ~color)
-    ) 
+  tmp %>% plot_ly(
+    type ='treemap',
+    ids =  ~ids,
+    labels = ~labels,
+    parents = ~parents,
+    values = ~ value,
+    branchvalues = "total",
+    marker  = list(colors = ~color),
+    domain = list(column=0))# %>% 
+    # add_trace(
+    #   branchvalues = "total"
+    # )
   
 })
 
