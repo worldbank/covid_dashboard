@@ -1,0 +1,147 @@
+@charset "utf-8";
+/* CSS Document */
+
+/*http://w0lxpjekins05.worldbank.org:3939/covid-dashboard/_w_f3a7e1f9/bootstrap-3.3.5/css/cosmo.min.css*/
+.navbar-inverse .navbar-brand {
+    color: #0f4887 !important;
+}
+
+.navbar-brand {
+    float: left;
+    padding: 14.5px 15px;
+    font-size: 19px;
+    line-height: 21px;
+    height: 50px;
+    background: white;
+    font-weight: 600 !important; 
+}
+
+.navbar-inverse .navbar-brand:hover, .navbar-inverse .navbar-brand:focus {
+    color: #000;
+    background-color: none;
+}
+
+.navbar-inverse .navbar-nav>li>a:hover, .navbar-inverse .navbar-nav>li>a:focus {
+    color: #f6f6f6;
+    background-color: #337ab7cc;
+}
+
+.navbar-inverse {
+    background-color: #f1f1f1;
+    border-color: #1967be;
+}
+
+.navbar-inverse .navbar-nav>li>a {
+    color: #004c92;
+    background-color: #dddddd;
+}
+
+body {
+    font-family: "Source Sans Pro",Calibri,Candara,Arial,sans-serif;
+    font-size: 15px;
+    line-height: 1.2;
+    color: #333333;
+    background-color: #ffffff;
+}
+
+p {
+    margin: 0 0 6.5px;
+}
+
+
+/*I think this is coming from your viz header... no CSS link*/
+
+body {
+    background: #fff;
+    padding: 60px 0 0 8px;
+}
+
+.bg-primary {
+    background-color: #004c92;
+}
+
+.chart-title {
+    border-bottom: 1px solid #337ab7b3;
+    color: #004c92 !important;
+    font-size: 15px;
+    font-weight: 500 !important;
+    padding: 7px 10px 4px;
+}
+
+.value-box > .inner {
+    padding: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.chart-wrapper-flex {
+    -webkit-box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+}
+
+.section.sidebar {
+    top: 51px;
+    background-color: #fff;
+}
+
+.shiny-input-container label {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.value-box .value {
+    font-size: 25px;
+    font-weight: bold;
+    margin: 0 0 3px 0;
+    white-space: nowrap;
+    padding: 0;
+}
+
+.dashboard-row {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    flex: 112 130 0px;
+}
+
+.section.sidebar {
+    position: fixed;
+    top: 51px;
+    left: 0;
+    bottom: 0;
+    /* border-right: 1px solid #e2e2e2; */
+    background-color: white;
+    padding-left: 10px;
+    padding-right: 10px;
+    visibility: hidden;
+    overflow: auto;
+}
+
+
+
+/*http://w0lxpjekins05.worldbank.org:3939/covid-dashboard/_w_f3a7e1f9/shared/selectize/css/selectize.bootstrap3.css*/
+
+.selectize-dropdown, .selectize-input, .selectize-input input {
+    color: #333333;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 17px;
+    -webkit-font-smoothing: inherit;
+}
