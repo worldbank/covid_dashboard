@@ -4,6 +4,7 @@ runtime: shiny
 output:
   flexdashboard::flex_dashboard:
     orientation: rows
+    css: R-shiny-style-changes.css
 ---
   
 ```{r setup, include=FALSE}
@@ -12,6 +13,11 @@ source("00_setup.R")
 
 library(pins)
 library(RColorBrewer)
+library(plyr)
+library(ggiraph)
+library(patchwork)
+library(cowplot)
+
 my_key <- Sys.getenv("connect_key")
 my_server <- "http://localhost:3939/"
 
@@ -20,8 +26,8 @@ my_server <- "http://localhost:3939/"
 # my_server <- "http://w0lxopshyprd1b.worldbank.org:3939/" # External server
 
 # UNCOMMENT FOR LOCAL USE with INTERNAL server:
- # my_key <- Sys.getenv("connect_key_int")
- # my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
+  my_key <- Sys.getenv("connect_key_int")
+  my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
 
 board_register_rsconnect(key    = my_key,
                          server = my_server)
@@ -79,7 +85,81 @@ cty_color <-  setNames(
 )
 
 
-income <- c("Income level")
+## pop age structure data
+indicators1 <- c("SP.POP.0004.MA.5Y", "SP.POP.1014.MA.5Y", "SP.POP.0509.MA.5Y",
+                 "SP.POP.1519.MA.5Y", "SP.POP.2024.MA.5Y", "SP.POP.2529.MA.5Y",
+                 "SP.POP.3034.MA.5Y", "SP.POP.3539.MA.5Y", "SP.POP.4044.MA.5Y",
+                 "SP.POP.4549.MA.5Y", "SP.POP.5054.MA.5Y", "SP.POP.5559.MA.5Y",
+                 "SP.POP.6064.MA.5Y", "SP.POP.6569.MA.5Y", "SP.POP.7074.MA.5Y",
+                 "SP.POP.7579.MA.5Y", "SP.POP.80UP.MA.5Y")
+
+indicators2 <- c("SP.POP.0004.FE.5Y",  "SP.POP.1014.FE.5Y", "SP.POP.0509.FE.5Y",
+                 "SP.POP.1519.FE.5Y", "SP.POP.2024.FE.5Y", "SP.POP.2529.FE.5Y",
+                 "SP.POP.3034.FE.5Y", "SP.POP.3539.FE.5Y", "SP.POP.4044.FE.5Y",
+                 "SP.POP.4549.FE.5Y", "SP.POP.5054.FE.5Y", "SP.POP.5559.FE.5Y",
+                 "SP.POP.6064.FE.5Y", "SP.POP.6569.FE.5Y", "SP.POP.7074.FE.5Y",
+                 "SP.POP.7579.FE.5Y", "SP.POP.80UP.FE.5Y")
+
+indicators <- c("SP.POP.TOTL.MA.IN", "SP.POP.TOTL.FE.IN")
+
+dt1 <- wb(
+  indicator = indicators1,
+  startdate = 2018,
+  enddate = 2018,
+  return_wide = FALSE
+  )
+
+dt2 <- wb(
+  indicator = indicators2,
+  startdate = 2018,
+  enddate = 2018,
+  return_wide = FALSE
+)
+
+dt3 <- wb(
+  indicator = indicators,
+  startdate = 2018,
+  enddate = 2018,
+  return_wide = TRUE
+) %>%
+  select("iso3c", "SP.POP.TOTL.MA.IN", "SP.POP.TOTL.FE.IN")
+
+  dt1 <- merge(dt1, dt3, "iso3c")
+  dt1$value2 <- (dt1$value * dt1$SP.POP.TOTL.MA.IN)/100
+
+  dt2 <- merge(dt2, dt3, "iso3c")
+  dt2$value2 <- (dt1$value * dt1$SP.POP.TOTL.FE.IN)/100
+
+  dt <- rbind(dt1, dt2)
+
+  dt$gender <- substr(dt$indicatorID, 13, 14)
+  dt$startage <- substr(dt$indicatorID, 8, 9)
+  dt$endage <- substr(dt$indicatorID, 10, 11)
+  dt$age <- paste0(dt$startage, "-", dt$endage)
+  dt$age[dt$age == "80-UP"] <- "80+"
+
+  dt$age <- as.factor(dt$age)
+
+  dt$value3 <- ifelse(dt$gender == "MA", dt$value2*-1, dt$value2)
+
+  ## income region and world level data
+indicators <- as.character(indicator_list$code)
+
+ing <- wb(
+  c("LIC", "LMC", "UMC", "HIC", "SSF", "SAS", "NAC", "ECS", "LCN", "MEA", "EAS"),
+  indicator = indicators,
+  startdate = 1990,
+  enddate = 2019,
+  return_wide = TRUE,
+) %>%
+  select(-iso2c)
+
+inm <- melt(ing)
+
+int <- inm %>%
+  filter(!is.na(value)) %>%
+  group_by(variable) %>%
+  filter(date == max(date))
 
 ```
 
@@ -193,17 +273,17 @@ renderPlotly ({
   
   df2 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable, ]
   df3 <- dfm[dfm$date == 2019 & dfm$variable %in% input$variable2, c(1, 6)]
-  dfs <- dfm[dfm$date == 2019 & dfm$variable %in% "COVID-19 Cases: Deaths", c(1, 6)]
+  #dfs <- dfm[dfm$date == 2019 & dfm$variable %in% "COVID-19 Cases: Deaths", c(1, 6)]
    
-    dfs <- dfs %>%
-          rename("siz" = "mrv")
+  #  dfs <- dfs %>%
+  #        rename("siz" = "mrv")
 
      
     df3 <- df3 %>%
-          rename("mrv2" = "mrv")
+          dplyr::rename("mrv2" = "mrv")
   
     df4 <- merge(df2, df3, by = c("iso3c"))   
-    df4 <- merge(df4, dfs, by = c("iso3c"))  
+  #  df4 <- merge(df4, dfs, by = c("iso3c"))  
   
     m <- df4[df4$`Short Name` %in% input$`Country Name`,]
     a <- list(x = m$mrv2, y = m$mrv,
@@ -411,12 +491,6 @@ radioButtons("var",
              selected = "COVID-19 Cases: Confirmed"
 )  
 
-# sliderInput("date",
-#             "Day:",
-#             min = min(treemap$date, na.rm = TRUE),
-#             max = max(treemap$date, na.rm = TRUE),
-#             value = max(treemap$date, na.rm = TRUE),
-#             timeFormat="%Y-%m-%d")
 
 getind <- reactive({
   input$var
@@ -502,5 +576,141 @@ renderPlotly({
     )
 })
 
+
+```
+
+Country Profile
+=====================================
+  Sidebar { .sidebar data-width=250}
+-----------------------------------------------------------------------
+  Last Updated on: `r today`
+
+```{r}
+
+selectInput("countryn",
+            "Country:",
+            choices = c(unique(as.character(dt$country))),
+            selected = "United States"
+)
+
+```
+
+Row {.tabset}
+-----------------------------------------------------------------------
+### Populations at risk
+```{r} 
+
+#dtl <- dt[(dt$country == input$countryn), ]
+dtl <- dt[dt$country == "United States",]
+
+con <- dfm %>%
+   filter(variable == "Mortality from CVD, cancer, diabetes or CRD between exact ages 30 and 70 (%)") %>%
+  group_by(iso3c) %>%
+  filter(mry == max(mry, na.rm = T)) %>%
+  select("iso3c", "variable", "mrv", "Income Group", "Region", "Short Name") %>%
+  dplyr::rename("value" = "mrv")
+
+#con$indicator <- "SH.DYN.NCOM.ZS
+
+renderGirafe({
+  
+  n1 <- ggplot(dtl, aes(x = age, y = value3, fill = gender)) + 
+    geom_bar_interactive(subset = plyr::.(gender == "FE"), stat = "identity",
+                         aes(tooltip = value3)) + 
+    geom_bar_interactive(subset = plyr::.(gender == "MA"), stat = "identity",
+                         aes(tooltip = value3)) + 
+    # scale_y_continuous(breaks = seq(-15000000, 15000000, 5000000), 
+    #                   labels = paste0(as.character(c(seq(15, 0, -5), seq(5, 15, 5))), "m")) + 
+    coord_flip() + 
+    scale_fill_brewer(palette = "Set1") + 
+    theme_bw()
+  
+  f <- ggplot(con, aes(x=value, y=`Income Group`, 
+                       color= ifelse(con$iso3c == "USA", "green", "grey"),
+                       size = 8))  + 
+    theme_bw() +
+  geom_point_interactive(tooltip = con$value)
+  
+  
+    t <- girafe(ggobj = plot_grid(n1, f, ncol = 1),
+          width_svg = 24, 
+          height_svg = 16)
+
+   t
+  
+})
+
+## add the CVD indicator
+   
+   
+```
+
+
+### Health systems capacity
+```{r}
+
+#cm <- dfm[(dfm$`Short Name` %in% input$Country2),]
+
+#cm <- dfm[dfm$`Short Name` %in% input$Country2,]
+cm <- dfm[dfm$`Short Name` %in% "United States",]
+
+con1 <- cm %>%
+   filter(variable == "UHC service coverage index" | variable == "Current health expenditure per capita, PPP (current international $)") %>%
+#  filter(`Short Name` == "United States") %>%
+  group_by(variable) %>%
+  filter(mry == max(mry, na.rm = T)) %>%
+  select("iso3c", "variable", "mrv", "Income Group", "Region") %>%
+  dplyr::rename("value" = "mrv")
+
+con1$indicator <- ifelse(con1$variable == "UHC service coverage index", "SH.UHC.SRVS.CV.XD",
+                        "SH.XPD.CHEX.PP.CD")
+
+con2 <- cm %>%
+   filter(variable == "Physicians (per 1,000 people)" | variable == "Nurses and midwives (per 1,000 people)") %>%
+#  filter(`Short Name` == "United States") %>%
+  group_by(variable) %>%
+  filter(mry == max(mry, na.rm = T)) %>%
+  select("iso3c", "variable", "mrv", "Income Group", "Region") %>%
+  dplyr::rename("value" = "mrv")
+
+con2$indicator <- ifelse(con2$variable == "Physicians (per 1,000 people)", "SH.MED.PHYS.ZS",
+                        "SH.MED.NUMW.P3")
+
+h1 <- int %>%
+  filter(country == con1$`Income Group`[1] | country == con1$Region[1]) %>%
+  filter(variable == "SH.XPD.CHEX.PP.CD" | variable == "SH.UHC.SRVS.CV.XD") %>%
+  select("iso3c", "variable", "value") %>%
+  dplyr::rename("indicator" = "variable")
+
+h2 <- int %>%
+  filter(country == con2$`Income Group`[1] | country == con2$Region[1]) %>%
+  filter(variable == "SH.MED.PHYS.ZS" | variable == "SH.MED.NUMW.P3") %>%
+  select("iso3c", "variable", "value") %>%
+  dplyr::rename("indicator" = "variable")
+
+h1 <- rbind(h1, con1)
+h2 <- rbind(h2, con2)
+
+renderGirafe({
+
+     p1 <- ggplot(data=h1, aes(x=iso3c, y=value)) +
+     geom_bar_interactive(stat="identity",
+                          aes(tooltip = iso3c))  + 
+    theme_bw() +
+     facet_wrap(~indicator, scales = "free")
+
+      p2 <- ggplot(h2, aes(fill=indicator, y=value, x=iso3c)) +
+     geom_bar_interactive(position="dodge", stat="identity",
+                          aes(tooltip = iso3c))  + 
+    theme_bw()
+
+
+   p <- girafe(ggobj = plot_grid(p1, p2, ncol = 1),
+          width_svg = 24, 
+          height_svg = 16)
+
+   p
+
+})
 
 ```
