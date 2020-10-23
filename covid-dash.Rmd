@@ -45,6 +45,7 @@ age_pop        <- age_pop$age_pop
 covid          <- pin_get("covid", board = "rsconnect")
 health         <- pin_get("health", board = "rsconnect")
 water          <- pin_get("water", board = "rsconnect")
+df             <- pin_get("dfsev", board = "rsconnect")
 
 
 #--------- covid data
@@ -566,5 +567,248 @@ renderPlotly({
     )
 })
 
+
+```
+
+COVID-19 Severity
+=====================================
+Sidebar { .sidebar data-width=250}
+-----------------------------------------------------------------------
+Last Updated on: `r today`
+
+```{r}
+
+selectizeInput("countrysev",
+               "Country:",
+               c(unique(as.character(df$country))),
+               multiple = TRUE, 
+               options = list(maxItems = 4),
+               selected = wst
+)
+
+
+
+
+radioButtons("var2",
+             "Y-axis",
+             choices = c("Country-specific", "Constant"),  
+             selected = "Country-specific"
+)  
+
+
+```
+
+Based on: <a href= "http://w0lxpjekins05.worldbank.org:3939/covid-dashboard-dev/#section-covid-19-severity">Schellekens, Philip and Sourrouille, Diego M., Covid-19 Mortality in Rich and Poor Countries: A Tale of Two Pandemics? (May 28, 2020). World Bank Policy Research Working Paper No. 9260.</a>
+
+
+Row
+-----------------------------------------------------------------------
+
+### The severity ratio is defined as the ratio of deaths attributed to COVID-19 relative to expected total deaths without the pandemic in the same time period.
+```{r}
+
+#renderText("The severity ratio is defined as the ratio of deaths attributed to COVID-19 relative to expected total deaths without the pandemic in the same time period.")
+
+####### Just trying chart out to observe data issues
+
+set <- 1          #for displaying (first, second, etc set)
+increment <- 4    #number of charts in each set
+
+########## SUBSET ######################################################################################################################
+
+uiOutput("dynamic2")
+
+output$dynamic2 <- renderUI({ 
+  if (input$var2 == "Country-specific"){
+    shinycssloaders::withSpinner(
+    ggiraphOutput("sev1", width = "100%", height = "100%")
+    )
+  } else {
+    shinycssloaders::withSpinner(
+    ggiraphOutput("sev2", width = "100%", height = "100%")
+    )
+    }
+})
+
+output$sev1 <- renderggiraph({
+  
+########## CHART  #######################################################################################################################
+df$tooltip1 <- c(paste0("Daily Severity Ratio (%): ", round(100*(df$discrete_severity), 1)))
+df$tooltip2 <- c(paste0("14-Day Average Severity Ratio (%): ", round(100*(df$cumulative_severity_14), 1)))
+  
+df2 <- df %>%
+  subset(date>="2020-03-01") %>%
+  subset(group==1) %>%
+#  subset(country %in% c("Argentina", "Brazil", "Colombia", "India"))
+  subset(country %in% input$countrysev)
+
+#cols    <- c( "c1" = "#6baed6", "c2" = "black" )
+
+
+p <- df2 %>%
+  ggplot() +
+
+#geoms--------------------------------------------------------------------------------------------------------
+
+geom_segment_interactive( aes(x=date, xend=date, y=0, yend=discrete_severity*100), color="#6baed6", size=0.7, alpha=0.5, tooltip = df2$tooltip1) +
+  geom_line_interactive(aes(x=date, y=cumulative_severity_14*100),color="black",size=0.3, alpha=0.7, tooltip = df2$tooltip2)+
+  geom_line(aes(x=date, y=pmr_below*100), size=0.3,color="black", alpha=0.7)+
+  geom_line(aes(x=date, y=pmr_above*100), size=0.3,color="black", alpha=0.7)+
+
+#scales-----------------------------------------------------------------------------------------------------
+
+#scale_x_date(date_labels = "%b%e" , date_breaks = "1 month", date_minor_breaks = "1 day", expand=c(0,0))+
+#scale_y_continuous(limits = c(0, 50), expand=c(0,0))+
+
+#labels-------------------------------------------------------------------------------------------------------
+xlab("") +
+  ylab("Daily severity ratio (percent)")+
+
+  geom_label_repel(
+    data=subset(df2, date=="2020-03-10"),
+    force = 1,
+    segment.size = 0.3,
+    segment.color="grey50",
+    segment.alpha=0.3,
+    box.padding = 0.2,
+    point.padding = 0,
+    aes(x=date, y=pmr_below*100,label=cause_below),
+    alpha=1,
+    size=2.5) +
+
+  geom_label_repel(
+    data=subset(df2, date=="2020-03-10"),
+    force = 1,
+    segment.size = 0.3,
+    segment.color="grey50",
+    segment.alpha=0.3,
+    box.padding = 0.2,
+    point.padding = 0,
+    aes(x=date, y=pmr_above*100,label=cause_above),
+    alpha=1,
+    size=2.5) +
+
+#theme---------------------------------------------------------------------------------------------------
+
+theme_light() +
+
+  theme(
+  #  legend.position="top",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    axis.title.y = element_text(color="black", size=7, vjust=2),
+    axis.title.x = element_text(color="black", size=7, vjust=-2),
+    axis.text =element_text(size=7,color="black"),
+    legend.background=element_blank(),
+  #  legend.title=element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.spacing.x=unit(1, "lines"),panel.spacing.y=unit(1.6, "lines"),
+    strip.text.x = element_text(size = 8, color = "black"),
+    strip.text.y = element_text(size = 8, color = "black"),
+    strip.background = element_rect(color="white", fill="white", size=1.5, 
+                                    linetype="solid"))
+
+#facet -----------------------------------------------------------------------------------------------------
+p1 <- p + facet_wrap(~country, ncol=2, scales="free") +
+      theme(strip.text.x = element_text(size = 11))
+
+x <- girafe(ggobj = p1)
+
+x
+
+})
+
+
+output$sev2 <- renderggiraph({
+  
+########## CHART  #######################################################################################################################
+df$tooltip1 <- c(paste0("Daily Severity Ratio (%): ", round(100*(df$discrete_severity), 1)))
+df$tooltip2 <- c(paste0("14-Day Average Severity Ratio (%): ", round(100*(df$cumulative_severity_14), 1)))
+  
+df2 <- df %>%
+  subset(date>="2020-03-01") %>%
+  subset(group==1) %>%
+#  subset(country %in% c("Argentina", "Brazil", "Colombia", "India"))
+  subset(country %in% input$countrysev)
+
+
+p <- df2 %>%
+  ggplot() +
+
+#geoms--------------------------------------------------------------------------------------------------------
+
+geom_segment_interactive( aes(x=date, xend=date, y=0, yend=discrete_severity*100), color="#6baed6",size=0.7, alpha=0.5, tooltip = df2$tooltip1) +
+  geom_line_interactive(aes(x=date, y=cumulative_severity_14*100),color="black",size=0.3, alpha=0.7, tooltip = df2$tooltip2)+
+  geom_line(aes(x=date, y=pmr_below*100), size=0.3,color="black", alpha=0.7)+
+  geom_line(aes(x=date, y=pmr_above*100), size=0.3,color="black", alpha=0.7)+
+
+#scales-----------------------------------------------------------------------------------------------------
+
+#scale_x_date(date_labels = "%b%e" , date_breaks = "1 month", date_minor_breaks = "1 day", expand=c(0,0))+
+#scale_y_continuous(limits = c(0, 50), expand=c(0,0))+
+
+#labels-------------------------------------------------------------------------------------------------------
+xlab("") +
+  ylab("Daily severity ratio (percent)")+
+
+  geom_label_repel(
+    data=subset(df2, date=="2020-03-10"),
+    force = 1,
+    segment.size = 0.3,
+    segment.color="grey50",
+    segment.alpha=0.3,
+    box.padding = 0.2,
+    point.padding = 0,
+    aes(x=date, y=pmr_below*100,label=cause_below),
+    alpha=1,
+    size=2.5) +
+
+  geom_label_repel(
+    data=subset(df2, date=="2020-03-10"),
+    force = 1,
+    segment.size = 0.3,
+    segment.color="grey50",
+    segment.alpha=0.3,
+    box.padding = 0.2,
+    point.padding = 0,
+    aes(x=date, y=pmr_above*100,label=cause_above),
+    alpha=1,
+    size=2.5) +
+
+#theme---------------------------------------------------------------------------------------------------
+
+theme_light() +
+
+  theme(
+    legend.position="top",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    axis.title.y = element_text(color="black", size=7, vjust=2),
+    axis.title.x = element_text(color="black", size=7, vjust=-2),
+    axis.text =element_text(size=7,color="black"),
+    legend.background=element_blank(),
+    legend.title=element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.spacing.x=unit(1, "lines"),panel.spacing.y=unit(1.6, "lines"),
+    strip.text.x = element_text(size = 8, color = "black"),
+    strip.text.y = element_text(size = 8, color = "black"),
+    strip.background = element_rect(color="white", fill="white", size=1.5, 
+                                    linetype="solid"))
+
+#facet -----------------------------------------------------------------------------------------------------
+p2 <- p + facet_wrap(~country, ncol=2) +
+      theme(strip.text.x = element_text(size = 11))
+  
+#y <- girafe(ggobj = p1,
+#          width_svg = 40, 
+#          height_svg = 25)
+  
+y <- girafe(ggobj = p2)
+
+y
+
+})
 
 ```

@@ -10,10 +10,12 @@ library(treemap)
 library(Hmisc)
 library(tidyverse)
 library(leaflet)
-library(fst)
+#library(fst)
 library(zoo)
 library(curl)
 library(wbstats)
+library(ggrepel)
+library(ggiraph)
 
 source("utils.R")
 
