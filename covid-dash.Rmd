@@ -24,8 +24,8 @@ my_server <- "http://localhost:3939/"
 # my_server <- "http://w0lxopshyprd1b.worldbank.org:3939/" # External server
 
 # UNCOMMENT FOR LOCAL USE with INTERNAL server:
- my_key <- Sys.getenv("connect_key_int")
- my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
+# my_key <- Sys.getenv("connect_key_int")
+# my_server <- "http://w0lxpjekins05.worldbank.org:3939/" # Internal server
 
 board_register_rsconnect(key    = my_key,
                          server = my_server)
@@ -904,8 +904,8 @@ p <- df_chart %>%
     panel.border = element_blank(),
     axis.ticks.y = element_blank(),
     panel.spacing.x=unit(2, "lines"),panel.spacing.y=unit(2, "lines"),
-    strip.text.x = element_text(size = 9, color = "black", vjust=2),
-    strip.text.y = element_text(size = 9, color = "black", vjust=2),
+    strip.text.x = element_text(size = 9, color = "black", vjust=1),
+    strip.text.y = element_text(size = 9, color = "black", vjust=1),
     strip.background = element_rect(color="white", fill="white", size=1.5, linetype="solid"),
     plot.margin = margin(2, 3, 1, 1.5, "cm"),
     plot.title=element_text(size=21, vjust=7,hjust=0.5),
