@@ -682,20 +682,6 @@ df_chart <- df_chart %>%
                                is.na(last_below_name) ~ last_above_name,
                                TRUE ~ last_below_name)) 
 
-df_chart$labelcause <- ifelse(df_chart$peak_rank==df_chart$last_rank, 
-          # allowing for the possibility that values approximating peak and last are the same
-                        ifelse(df_chart$peak_rank==0,               
-          # the 0 rank corresponds to all-cause mortality in 2019
-                               "All Causes", 
-                               paste0(df_chart$country2, ": Cause #", df_chart$peak_rank, " = ", df_chart$peak_name)),
-                        ifelse(df_chart$peak_rank==0 ,
-                               paste0(df_chart$country2, ": All Causes and Cause #", df_chart$last_rank, " = ", df_chart$last_name), 
-                               paste0(df_chart$country2, ": Cause #", df_chart$peak_rank, " = ", df_chart$peak_name, "; Cause #", df_chart$last_rank, " = ", df_chart$last_name)
-                               ))
-
-
-# chart
-df_chart$labelcause <- str_wrap(df_chart$labelcause, 50)
 df_chart$cumsev7 <- round(100*(df_chart$cumulative_severity_7),1)
 df_chart$tooltip2 <- paste0("7-Day Average Severity Ratio: ", df_chart$cumsev7, "%")
 
@@ -704,10 +690,20 @@ top <- plyr::round_any(df_chart$peak_7[1], ifelse(df_chart$peak_7[1]<0.1, 0.01, 
 df_chart <- df_chart %>%
   group_by(country2) %>%
   mutate(chosen_pmr = ifelse(input$linevar == "Peak value", peak_pmr, last_pmr)) %>%
-  mutate(chosen_rank = ifelse(input$linevar == "Peak value", peak_rank, last_rank))
+  mutate(chosen_rank = ifelse(input$linevar == "Peak value", peak_rank, last_rank)) %>%
+  mutate(chosen_name = ifelse(input$linevar == "Peak value", peak_name, last_name))
 
 #df_chart$chosen_rank <- ifelse(input$linevar == "Peak value", df_chart$peak_rank,
 #                              df_chart$last_rank)
+
+df_chart$labelcause <- ifelse(df_chart$chosen_rank==0,
+                               paste0(df_chart$country2, ": All Causes"), 
+                               paste0(df_chart$country2, ": Cause #", df_chart$chosen_rank, " = ", df_chart$chosen_name)
+                        )
+
+
+# chart
+df_chart$labelcause <- str_wrap(df_chart$labelcause, 50)
 
 p <- df_chart %>% 
   ggplot() +
@@ -730,7 +726,7 @@ p <- df_chart %>%
        title=paste0("Severity Ratios for COVID-19 and Top Cause(s) of Death in 2019"))+
   
   geom_label_repel(                                              # Label for peak cause
-    data=subset(df_chart, date=="2020-08-01"),
+    data=subset(df_chart, date==min(date)),
     force = 1,
     point.padding = 0, label.padding = 0.5,
     aes(x=date, y=chosen_pmr,
@@ -826,20 +822,6 @@ df_chart <- df_chart %>%
                                is.na(last_below_name) ~ last_above_name,
                                TRUE ~ last_below_name)) 
 
-df_chart$labelcause <- ifelse(df_chart$peak_rank==df_chart$last_rank, 
-          # allowing for the possibility that values approximating peak and last are the same
-                        ifelse(df_chart$peak_rank==0,               
-          # the 0 rank corresponds to all-cause mortality in 2019
-                               "All Causes", 
-                               paste0(df_chart$country2, ": Cause #", df_chart$peak_rank, " = ", df_chart$peak_name)),
-                        ifelse(df_chart$peak_rank==0 ,
-                               paste0(df_chart$country2, ": All Causes and Cause #", df_chart$last_rank, " = ", df_chart$last_name), 
-                               paste0(df_chart$country2, ": Cause #", df_chart$peak_rank, " = ", df_chart$peak_name, "; Cause #", df_chart$last_rank, " = ", df_chart$last_name)
-                               ))
-
-
-# chart
-df_chart$labelcause <- str_wrap(df_chart$labelcause, 50)
 df_chart$cumsev7 <- round(100*(df_chart$cumulative_severity_7),1)
 df_chart$tooltip2 <- paste0("7-Day Average Severity Ratio: ", df_chart$cumsev7, "%")
 
@@ -848,7 +830,16 @@ top <- plyr::round_any(df_chart$peak_7[1], ifelse(df_chart$peak_7[1]<0.1, 0.01, 
 df_chart <- df_chart %>%
   group_by(country2) %>%
   mutate(chosen_pmr = ifelse(input$linevar == "Peak value", peak_pmr, last_pmr)) %>%
-  mutate(chosen_rank = ifelse(input$linevar == "Peak value", peak_rank, last_rank))
+  mutate(chosen_rank = ifelse(input$linevar == "Peak value", peak_rank, last_rank)) %>%
+  mutate(chosen_name = ifelse(input$linevar == "Peak value", peak_name, last_name))
+
+df_chart$labelcause <- ifelse(df_chart$chosen_rank==0,
+                               paste0(df_chart$country2, ": All Causes"), 
+                               paste0(df_chart$country2, ": Cause #", df_chart$chosen_rank, " = ", df_chart$chosen_name)
+                        )
+
+# chart
+df_chart$labelcause <- str_wrap(df_chart$labelcause, 50)
 
 p <- df_chart %>% 
   ggplot() +
