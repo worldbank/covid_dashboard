@@ -596,6 +596,13 @@ dateInput("start_date",
 #          end = max(df$date)
 )
 
+radioButtons("linevar",
+             "Cause of death closest to",
+          #   choiceNames  = c("Peak value", "Most recent value"),  
+          #   choiceValues = c("peak_pmr", "last_pmr"),
+             choices = c("Peak value", "Last value"),  
+             selected = "Peak value"
+) 
 
 radioButtons("var2",
              "Y-axis",
@@ -645,7 +652,7 @@ output$sev1 <- renderggiraph({
 # Prepare dataframe
 df$date <- as.Date(df$date, format = "%Y-%m-%d")
 #df$tooltip1 <- c(paste0("Daily Severity Ratio (%): ", round(100*(df$discrete_severity), 1)))
-start_date <- min(df$date)
+#start_date <- min(df$date)
 
 df_chart <- df %>%       # Need to pick date range before calculating what follows
   subset(date>=input$start_date) %>%
@@ -694,6 +701,13 @@ df_chart$tooltip2 <- paste0("7-Day Average Severity Ratio: ", df_chart$cumsev7, 
 
 top <- plyr::round_any(df_chart$peak_7[1], ifelse(df_chart$peak_7[1]<0.1, 0.01, 0.1), ceiling)  # max range of display on Y axis
 
+df_chart <- df_chart %>%
+  group_by(country) %>%
+  mutate(chosen_pmr = ifelse(input$linevar == "Peak value", peak_pmr, last_pmr)) %>%
+  mutate(chosen_rank = ifelse(input$linevar == "Peak value", peak_rank, last_rank))
+
+#df_chart$chosen_rank <- ifelse(input$linevar == "Peak value", df_chart$peak_rank,
+#                              df_chart$last_rank)
 
 p <- df_chart %>% 
   ggplot() +
@@ -701,10 +715,10 @@ p <- df_chart %>%
             size=1.5, color="#619CFF", alpha=1)+
     geom_point_interactive(aes(x=date, y=cumulative_severity_7, tooltip = tooltip2),       # show the 7-day average
             size=0.5, color="#619CFF", alpha=1)+
-  geom_line(aes(x=date, y=peak_pmr),                    # show the horizontal line for the cause of death that is closest from below to the peak value of the 7-day average
+  geom_line(aes(x=date, y=chosen_pmr),                    # show the horizontal line for the cause of death that is closest from below to the peak value of the 7-day average
             size=1.5, color="#F8766D", alpha=1)+
-  geom_line(aes(x=date, y=last_pmr),                    # show the horizontal line for the cause of death that is closest from below to the last value of the 7-day average
-            size=1.5,color="#F8766D", alpha=1)+
+#  geom_line(aes(x=date, y=last_pmr),                    # show the horizontal line for the cause of death that is closest from below to the last value of the 7-day average
+#            size=1.5,color="#F8766D", alpha=1)+
   
   scale_x_date(date_breaks = "1 month", date_labels = "%b")+
   scale_y_continuous(#limits = c(NA, top), 
@@ -719,20 +733,153 @@ p <- df_chart %>%
     data=subset(df_chart, date=="2020-08-01"),
     force = 1,
     point.padding = 0, label.padding = 0.5,
-    aes(x=date, y=peak_pmr,label=ifelse(peak_rank==0, "All Causes", paste0("Cause #", peak_rank))),
+    aes(x=date, y=chosen_pmr,
+        label=ifelse(chosen_rank==0, "All Causes", paste0("Cause #", chosen_rank))),
     color="#F8766D",
     label.size=1.2,
     hjust=0.5, alpha=1,size=5) +
   
-    geom_label_repel(                                            # Label for last cause
-    data=subset(df_chart, date=="2020-08-01"),
+  geom_label_repel(                                            # Labe for COVID-19
+    data=subset(df_chart, date==max(date)),
     force = 1,
     point.padding = 0,label.padding = 0.5,
-    aes(x=date, y=last_pmr,label=ifelse(last_rank==0, "All Causes", paste0("Cause #", last_rank))),
+    nudge_x = -10,
+    aes(x=date, y=cumulative_severity_7,label="COVID-19"),
+    color="#619CFF",
+    label.size=1.2,
+    hjust=0, alpha=1, size=5) +
+  
+  theme_light() +
+  theme(
+    legend.position="none",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    axis.title.y = element_text(color="black", size=14, vjust=4),
+    axis.title.x = element_text(color="black", size=14, vjust=0),
+    axis.text =element_text(size=14,color="black"),
+    legend.background=element_blank(),
+    legend.title=element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.spacing.x=unit(2, "lines"),panel.spacing.y=unit(2, "lines"),
+    strip.text.x = element_text(size = 9, color = "black", vjust=1),
+    strip.text.y = element_text(size = 9, color = "black", vjust=1),
+    strip.background = element_rect(color="white", fill="white", size=1.5, linetype="solid"),
+    plot.margin = margin(2, 3, 1, 1.5, "cm"),
+    plot.title=element_text(size=21, vjust=7,hjust=0.5),
+    plot.subtitle = element_text(size=16, vjust=5, hjust=0.5),
+    plot.caption = element_text(size=12, hjust=0, vjust=0, color="darkgrey")
+  )+
+  coord_cartesian(clip = 'off')
+
+# #facet -----------------------------------------------------------------------------------------------------
+ p1 <- p + facet_wrap(~labelcause, ncol=2, scales="free") +
+       theme(strip.text.x = element_text(size = 20))
+
+ x <- girafe(ggobj = p1,
+             width_svg = 18,
+             height_svg = 10)
+ 
+ x
+# 
+
+})
+# 
+# 
+output$sev2 <- renderggiraph({
+  
+########## CHART  #######################################################################################################################
+#group_selected <- 1
+#unit_selected <- "Belgium"
+#start_date <- "2020-03-01"
+
+# Prepare dataframe
+df$date <- as.Date(df$date, format = "%Y-%m-%d")
+#df$tooltip1 <- c(paste0("Daily Severity Ratio (%): ", round(100*(df$discrete_severity), 1)))
+#start_date <- min(df$date)
+
+df_chart <- df %>%       # Need to pick date range before calculating what follows
+  subset(date>=input$start_date) %>%
+#  subset(date>=start_date) %>%
+#  subset(country %in% unit_selected)
+#  subset(group==group_selected) %>%
+  subset(country %in% input$unit_selected)
+
+df_chart <- df_chart %>%
+  group_by(country) %>%
+  mutate(peak_pmr = case_when(is.na(peak_above_pmr) ~ peak_below_pmr,    # We would always like to select the cause of death that is just below the reference value. In some exceptional cases the reference value is so low that there is no threshold below. We will then pick the nearest threshold above.
+                              is.na(peak_below_pmr) ~ peak_above_pmr,
+                              TRUE ~ peak_below_pmr),
+         peak_rank = case_when(is.na(peak_above_rank) ~ peak_below_rank,
+                               is.na(peak_below_rank) ~ peak_above_rank,
+                               TRUE ~ peak_below_rank),
+         peak_name = case_when(is.na(peak_above_name) ~ peak_below_name,
+                               is.na(peak_below_name) ~ peak_above_name,
+                               TRUE ~ peak_below_name), 
+         last_pmr = case_when(is.na(last_above_pmr) ~ last_below_pmr,
+                              is.na(last_below_pmr) ~ last_above_pmr,
+                              TRUE ~ last_below_pmr),
+         last_rank = case_when(is.na(last_above_rank) ~ last_below_rank,
+                               is.na(last_below_rank) ~ last_above_rank,
+                               TRUE ~ last_below_rank),
+         last_name = case_when(is.na(last_above_name) ~ last_below_name,
+                               is.na(last_below_name) ~ last_above_name,
+                               TRUE ~ last_below_name)) 
+
+df_chart$labelcause <- ifelse(df_chart$peak_rank==df_chart$last_rank, 
+          # allowing for the possibility that values approximating peak and last are the same
+                        ifelse(df_chart$peak_rank==0,               
+          # the 0 rank corresponds to all-cause mortality in 2019
+                               "All Causes", 
+                               paste0(df_chart$country2, ": Cause #", df_chart$peak_rank, " = ", df_chart$peak_name)),
+                        ifelse(df_chart$peak_rank==0 ,
+                               paste0(df_chart$country2, ": All Causes and Cause #", df_chart$last_rank, " = ", df_chart$last_name), 
+                               paste0(df_chart$country2, ": Cause #", df_chart$peak_rank, " = ", df_chart$peak_name, "; Cause #", df_chart$last_rank, " = ", df_chart$last_name)
+                               ))
+
+
+# chart
+df_chart$labelcause <- str_wrap(df_chart$labelcause, 60)
+df_chart$cumsev7 <- round(100*(df_chart$cumulative_severity_7),1)
+df_chart$tooltip2 <- paste0("7-Day Average Severity Ratio: ", df_chart$cumsev7, "%")
+
+top <- plyr::round_any(df_chart$peak_7[1], ifelse(df_chart$peak_7[1]<0.1, 0.01, 0.1), ceiling)  # max range of display on Y axis
+
+df_chart$chosen_pmr <- ifelse(input$linevar == "Peak value", df_chart$peak_pmr,
+                              df_chart$last_pmr)
+
+df_chart$chosen_rank <- ifelse(input$linevar == "Peak value", df_chart$peak_rank,
+                              df_chart$last_rank)
+
+p <- df_chart %>% 
+  ggplot() +
+  geom_line(aes(x=date, y=cumulative_severity_7),       # show the 7-day average
+            size=1.5, color="#619CFF", alpha=1)+
+    geom_point_interactive(aes(x=date, y=cumulative_severity_7, tooltip = tooltip2),       # show the 7-day average
+            size=0.5, color="#619CFF", alpha=1)+
+  geom_line(aes(x=date, y=chosen_pmr),                    # show the horizontal line for the cause of death that is closest from below to the peak value of the 7-day average
+            size=1.5, color="#F8766D", alpha=1)+
+#  geom_line(aes(x=date, y=last_pmr),                    # show the horizontal line for the cause of death that is closest from below to the last value of the 7-day average
+#            size=1.5,color="#F8766D", alpha=1)+
+  
+  scale_x_date(date_breaks = "1 month", date_labels = "%b")+
+  scale_y_continuous(#limits = c(NA, top), 
+                     expand = expansion(mult = c(0.01, 0)),
+                     labels = scales::percent_format(accuracy = ifelse(top<0.1, 0.1, 1))) +  #show full percentages except when peak value is less than 10%.
+  
+  labs(x="", 
+       y="Percent of 2019 deaths",
+       title=paste0("Severity Ratios for COVID-19 and Top Cause(s) of Death in 2019"))+
+  
+  geom_label_repel(                                              # Label for peak cause
+    data=subset(df_chart, date==min(date)),
+    force = 1,
+    point.padding = 0, label.padding = 0.5,
+    aes(x=date, y=chosen_pmr,
+        label=ifelse(chosen_rank==0, "All Causes", paste0("Cause #", chosen_rank))),
     color="#F8766D",
     label.size=1.2,
     hjust=0.5, alpha=1,size=5) +
-
   
   geom_label_repel(                                            # Labe for COVID-19
     data=subset(df_chart, date==max(date)),
@@ -768,158 +915,15 @@ p <- df_chart %>%
   coord_cartesian(clip = 'off')
 
 # #facet -----------------------------------------------------------------------------------------------------
- p1 <- p + facet_wrap(~labelcause, ncol=2, scales="free") +
-       theme(strip.text.x = element_text(size = 20))
-
- x <- girafe(ggobj = p1,
-             width_svg = 18,
-             height_svg = 10)
- 
- x
-# 
-
-})
-# 
-# 
- output$sev2 <- renderggiraph({
-
-  ########## CHART  #######################################################################################################################
-#group_selected <- 1
-#unit_selected <- "Belgium"
-start_date <- min(df$date)
-
-# Prepare dataframe
-
-df$date <- as.Date(df$date, format = "%Y-%m-%d")
-
-df_chart <- df %>%             # Need to pick date range before calculating what follows
-  subset(date>=input$start_date) %>%
-#  subset(group==group_selected) %>%
-  subset(country %in% input$unit_selected)
-
-df_chart <- df_chart %>%
-  group_by(country) %>%
-  mutate(peak_pmr = case_when(is.na(peak_above_pmr) ~ peak_below_pmr,    # We would always like to select the cause of death that is just below the reference value. In some exceptional cases the reference value is so low that there is no threshold below. We will then pick the nearest threshold above.
-                              is.na(peak_below_pmr) ~ peak_above_pmr,
-                              TRUE ~ peak_below_pmr),
-         peak_rank = case_when(is.na(peak_above_rank) ~ peak_below_rank,
-                               is.na(peak_below_rank) ~ peak_above_rank,
-                               TRUE ~ peak_below_rank),
-         peak_name = case_when(is.na(peak_above_name) ~ peak_below_name,
-                               is.na(peak_below_name) ~ peak_above_name,
-                               TRUE ~ peak_below_name), 
-         last_pmr = case_when(is.na(last_above_pmr) ~ last_below_pmr,
-                              is.na(last_below_pmr) ~ last_above_pmr,
-                              TRUE ~ last_below_pmr),
-         last_rank = case_when(is.na(last_above_rank) ~ last_below_rank,
-                               is.na(last_below_rank) ~ last_above_rank,
-                               TRUE ~ last_below_rank),
-         last_name = case_when(is.na(last_above_name) ~ last_below_name,
-                               is.na(last_below_name) ~ last_above_name,
-                               TRUE ~ last_below_name)) 
-
-df_chart$labelcause <- ifelse(df_chart$peak_rank==df_chart$last_rank, 
-          # allowing for the possibility that values approximating peak and last are the same
-                        ifelse(df_chart$peak_rank==0,               
-          # the 0 rank corresponds to all-cause mortality in 2019
-                               "All Causes", 
-                               paste0(df_chart$country2, ": Cause #", df_chart$peak_rank, " = ", df_chart$peak_name)),
-                        ifelse(df_chart$peak_rank==0 ,
-                               paste0("All Causes and Cause #", df_chart$last_rank, " = ", df_chart$last_name), 
-                               paste0(df_chart$country2, ": Cause #", df_chart$peak_rank, " = ", df_chart$peak_name, "; Cause #", df_chart$last_rank, " = ", df_chart$last_name)
-                               ))
-# chart
-
-top <- plyr::round_any(df_chart$peak_7[1], ifelse(df_chart$peak_7[1]<0.1, 0.01, 0.1),
-                       ceiling)  # max range of display on Y axis
-df_chart$cumsev7 <- round(100*(df_chart$cumulative_severity_7),1)
-df_chart$tooltip2 <- paste0("7-Day Average Severity Ratio: ", df_chart$cumsev7, "%")
-num <- median(df_chart$date)
-  
-p <- df_chart %>% 
-  ggplot() +
-  
-  geom_line(aes(x=date, y=cumulative_severity_7),       # show the 7-day average
-            size=1.5, color="#619CFF", alpha=1)+
-    geom_point_interactive(aes(x=date, y=cumulative_severity_7, tooltip = tooltip2),       # show the 7-day average
-            size=0.5, color="#619CFF", alpha=1)+
-  geom_line(aes(x=date, y=peak_pmr),                    # show the horizontal line for the cause of death that is closest from below to the peak value of the 7-day average
-            size=1.5, color="#F8766D", alpha=1)+
-  geom_line(aes(x=date, y=last_pmr),                    # show the horizontal line for the cause of death that is closest from below to the last value of the 7-day average
-            size=1.5,color="#F8766D", alpha=1)+
-  
-  scale_x_date(date_breaks = "1 month", date_labels = "%b")+
-  scale_y_continuous(#limits = c(NA, top), 
-                     expand = expansion(mult = c(0.01, 0)),
-                     labels = scales::percent_format(accuracy = ifelse(top<0.1, 0.1, 1))) +  #show full percentages except when peak value is less than 10%.
-  
-  labs(x="", 
-       y="Percent of 2019 deaths",
-       title=paste0("Severity Ratios for COVID-19 and Top Cause(s) of Death in 2019"))+
-  
-  geom_label_repel(                                              # Label for peak cause
-    data=subset(df_chart, date==max(date)),
-    force = 1,
-    point.padding = 0, label.padding = 0.5,
-    aes(x=date, y=peak_pmr,label=ifelse(peak_rank==0, "All Causes", paste0("Cause #", peak_rank))),
-    color="#F8766D",
-    label.size=1.2,
-    hjust=0.5, alpha=1,size=5) +
-  
-    geom_label_repel(                                            # Label for last cause
-    data=subset(df_chart, date==max(date)),
-    force = 1,
-    point.padding = 0,label.padding = 0.5,
-    aes(x=date, y=last_pmr,label=ifelse(last_rank==0, "All Causes", paste0("Cause #", last_rank))),
-    color="#F8766D",
-    label.size=1.2,
-    hjust=0.5, alpha=1,size=5) +
-
-  
-  geom_label_repel(                                            # Labe for COVID-19
-    data=subset(df_chart, date==num),
-    force = 1,
-    point.padding = 0,label.padding = 0.5,
-    nudge_x = -10,
-    aes(x=date, y=cumulative_severity_7,label="COVID-19"),
-    color="#619CFF",
-    label.size=1.2,
-    hjust=0.5, alpha=1, size=5) +
-  
-  theme_light() +
-  theme(
-    legend.position="none",
-    panel.grid.minor = element_blank(),
-    panel.grid.major.x = element_blank(),
-    axis.title.y = element_text(color="black", size=14, vjust=4),
-    axis.title.x = element_text(color="black", size=14, vjust=0),
-    axis.text =element_text(size=14,color="black"),
-    legend.background=element_blank(),
-    legend.title=element_blank(),
-    panel.border = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.spacing.x=unit(2, "lines"),panel.spacing.y=unit(2, "lines"),
-    strip.text.x = element_text(size = 9, color = "black", vjust=2),
-    strip.text.y = element_text(size = 9, color = "black", vjust=2),
-    strip.background = element_rect(color="white", fill="white", size=1.5, linetype="solid"),
-    plot.margin = margin(2, 3, 1, 1.5, "cm"),
-    plot.title=element_text(size=21, vjust=7,hjust=0.5),
-    plot.subtitle = element_text(size=16, vjust=5, hjust=0.5),
-    plot.caption = element_text(size=12, hjust=0, vjust=0, color="darkgrey")
-  )+
-  coord_cartesian(clip = 'off')   
-
-# #facet -----------------------------------------------------------------------------------------------------
  p2 <- p + facet_wrap(~labelcause, ncol=2, scales="fixed") +
        theme(strip.text.x = element_text(size = 20))
-   
-   
+
  y <- girafe(ggobj = p2,
              width_svg = 18,
              height_svg = 10)
  
  y
- 
- })
+# 
 
+})
 ```
