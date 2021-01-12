@@ -581,7 +581,7 @@ Last Updated on: `r today`
 
 selectizeInput("unit_selected",
                "Country:",
-               c(unique(as.character(df$country))),
+               c(unique(as.character(df$country2))),
                multiple = TRUE, 
                options = list(maxItems = 4),
                selected = wst
@@ -659,10 +659,10 @@ df_chart <- df %>%       # Need to pick date range before calculating what follo
 #  subset(date>=start_date) %>%
 #  subset(country %in% unit_selected)
 #  subset(group==group_selected) %>%
-  subset(country %in% input$unit_selected)
+  subset(country2 %in% input$unit_selected)
 
 df_chart <- df_chart %>%
-  group_by(country) %>%
+  group_by(country2) %>%
   mutate(peak_pmr = case_when(is.na(peak_above_pmr) ~ peak_below_pmr,    # We would always like to select the cause of death that is just below the reference value. In some exceptional cases the reference value is so low that there is no threshold below. We will then pick the nearest threshold above.
                               is.na(peak_below_pmr) ~ peak_above_pmr,
                               TRUE ~ peak_below_pmr),
@@ -695,14 +695,14 @@ df_chart$labelcause <- ifelse(df_chart$peak_rank==df_chart$last_rank,
 
 
 # chart
-df_chart$labelcause <- str_wrap(df_chart$labelcause, 60)
+df_chart$labelcause <- str_wrap(df_chart$labelcause, 50)
 df_chart$cumsev7 <- round(100*(df_chart$cumulative_severity_7),1)
 df_chart$tooltip2 <- paste0("7-Day Average Severity Ratio: ", df_chart$cumsev7, "%")
 
 top <- plyr::round_any(df_chart$peak_7[1], ifelse(df_chart$peak_7[1]<0.1, 0.01, 0.1), ceiling)  # max range of display on Y axis
 
 df_chart <- df_chart %>%
-  group_by(country) %>%
+  group_by(country2) %>%
   mutate(chosen_pmr = ifelse(input$linevar == "Peak value", peak_pmr, last_pmr)) %>%
   mutate(chosen_rank = ifelse(input$linevar == "Peak value", peak_rank, last_rank))
 
@@ -803,10 +803,10 @@ df_chart <- df %>%       # Need to pick date range before calculating what follo
 #  subset(date>=start_date) %>%
 #  subset(country %in% unit_selected)
 #  subset(group==group_selected) %>%
-  subset(country %in% input$unit_selected)
+  subset(country2 %in% input$unit_selected)
 
 df_chart <- df_chart %>%
-  group_by(country) %>%
+  group_by(country2) %>%
   mutate(peak_pmr = case_when(is.na(peak_above_pmr) ~ peak_below_pmr,    # We would always like to select the cause of death that is just below the reference value. In some exceptional cases the reference value is so low that there is no threshold below. We will then pick the nearest threshold above.
                               is.na(peak_below_pmr) ~ peak_above_pmr,
                               TRUE ~ peak_below_pmr),
@@ -839,17 +839,16 @@ df_chart$labelcause <- ifelse(df_chart$peak_rank==df_chart$last_rank,
 
 
 # chart
-df_chart$labelcause <- str_wrap(df_chart$labelcause, 60)
+df_chart$labelcause <- str_wrap(df_chart$labelcause, 50)
 df_chart$cumsev7 <- round(100*(df_chart$cumulative_severity_7),1)
 df_chart$tooltip2 <- paste0("7-Day Average Severity Ratio: ", df_chart$cumsev7, "%")
 
 top <- plyr::round_any(df_chart$peak_7[1], ifelse(df_chart$peak_7[1]<0.1, 0.01, 0.1), ceiling)  # max range of display on Y axis
 
-df_chart$chosen_pmr <- ifelse(input$linevar == "Peak value", df_chart$peak_pmr,
-                              df_chart$last_pmr)
-
-df_chart$chosen_rank <- ifelse(input$linevar == "Peak value", df_chart$peak_rank,
-                              df_chart$last_rank)
+df_chart <- df_chart %>%
+  group_by(country2) %>%
+  mutate(chosen_pmr = ifelse(input$linevar == "Peak value", peak_pmr, last_pmr)) %>%
+  mutate(chosen_rank = ifelse(input$linevar == "Peak value", peak_rank, last_rank))
 
 p <- df_chart %>% 
   ggplot() +
