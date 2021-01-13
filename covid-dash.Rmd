@@ -646,7 +646,7 @@ output$sev1 <- renderggiraph({
   
 ########## CHART  #######################################################################################################################
 #group_selected <- 1
-#unit_selected <- "Belgium"
+#unit_selected <- c("Belgium", "Western Africa", "India")
 #start_date <- "2020-03-01"
 
 # Prepare dataframe
@@ -685,7 +685,15 @@ df_chart <- df_chart %>%
 df_chart$cumsev7 <- round(100*(df_chart$cumulative_severity_7),1)
 df_chart$tooltip2 <- paste0("7-Day Average Severity Ratio: ", df_chart$cumsev7, "%")
 
-top <- plyr::round_any(df_chart$peak_7[1], ifelse(df_chart$peak_7[1]<0.1, 0.01, 0.1), ceiling)  # max range of display on Y axis
+top = plyr::round_any(df_chart$peak_7[1], ifelse(df_chart$peak_7[1]<0.1, 0.01, 
+                                            ifelse(df_chart$peak_7[1]<0.01, 0.001, 0.1)),
+                       ceiling)
+
+df_chart <- df_chart %>%
+  group_by(country2) %>%
+  mutate(top = plyr::round_any(max(df_chart$peak_7), ifelse(max(df_chart$peak_7)<0.1, 0.01, 
+                                            ifelse(max(df_chart$peak_7)<0.01, 0.001, 0.1)),
+                       ceiling))  # max range of display on Y axis
 
 df_chart <- df_chart %>%
   group_by(country2) %>%
@@ -704,6 +712,7 @@ df_chart$labelcause <- ifelse(df_chart$chosen_rank==0,
 
 # chart
 df_chart$labelcause <- str_wrap(df_chart$labelcause, 50)
+rnge <- max(df_chart$date) - min(df_chart$date)
 
 p <- df_chart %>% 
   ggplot() +
@@ -719,7 +728,9 @@ p <- df_chart %>%
   scale_x_date(date_breaks = "1 month", date_labels = "%b")+
   scale_y_continuous(#limits = c(NA, top), 
                      expand = expansion(mult = c(0.01, 0)),
-                     labels = scales::percent_format(accuracy = ifelse(top<0.1, 0.1, 1))) +  #show full percentages except when peak value is less than 10%.
+                     labels = scales::percent_format(accuracy = ifelse(max(df_chart$peak_7) < 1,  0.1, 1)
+                                                     )
+                    ) +  #show full percentages except when peak value is less than 10%.
   
   labs(x="", 
        y="Percent of 2019 deaths",
@@ -736,7 +747,7 @@ p <- df_chart %>%
     hjust=0.5, alpha=1,size=5) +
   
   geom_label_repel(                                            # Labe for COVID-19
-    data=subset(df_chart, date==max(date)),
+    data=subset(df_chart, date==ifelse(rnge < 31, max(date), min(date)+30)) ,
     force = 1,
     point.padding = 0,label.padding = 0.5,
     nudge_x = -10,
@@ -840,6 +851,7 @@ df_chart$labelcause <- ifelse(df_chart$chosen_rank==0,
 
 # chart
 df_chart$labelcause <- str_wrap(df_chart$labelcause, 50)
+rnge <- max(df_chart$date) - min(df_chart$date)
 
 p <- df_chart %>% 
   ggplot() +
@@ -872,7 +884,7 @@ p <- df_chart %>%
     hjust=0.5, alpha=1,size=5) +
   
   geom_label_repel(                                            # Labe for COVID-19
-    data=subset(df_chart, date==max(date)),
+    data=subset(df_chart, date==ifelse(rnge < 31, max(date), min(date)+30)),
     force = 1,
     point.padding = 0,label.padding = 0.5,
     nudge_x = -10,
