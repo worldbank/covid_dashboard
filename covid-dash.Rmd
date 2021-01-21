@@ -748,7 +748,7 @@ p <- df_chart %>%
   
   geom_label_repel(                                              # Label for peak cause
     data=subset(df_chart, date==date_label_topcause),
-    force = 1,
+    force = 0,
     point.padding = 0, label.padding = 0.5,
     aes(x=date, y=chosen_pmr,
         label=ifelse(chosen_rank==0, "All Causes", paste0("Cause #", chosen_rank))),
@@ -759,7 +759,7 @@ p <- df_chart %>%
   
   geom_label_repel(                                            # Labe for COVID-19
    data=subset(df_chart, date==date_label_covid19) ,
-     force = 1,
+     force = 0,
      point.padding = 0,label.padding = 0.5,
      nudge_x = -10,
      aes(x=date, y=cumulative_severity_7,label="COVID-19"),
@@ -895,7 +895,7 @@ p <- df_chart %>%
   
   geom_label_repel(                                              # Label for peak cause
     data=subset(df_chart, date==date_label_topcause),
-    force = 1,
+    force = 0,
     point.padding = 0, label.padding = 0.5,
     aes(x=date, y=chosen_pmr,
         label=ifelse(chosen_rank==0, "All Causes", paste0("Cause #", chosen_rank))),
@@ -906,7 +906,7 @@ p <- df_chart %>%
   
   geom_label_repel(                                            # Labe for COVID-19
     data=subset(df_chart, date==date_label_covid19),
-    force = 1,
+    force = 0,
     point.padding = 0,label.padding = 0.5,
     nudge_x = -10,
     aes(x=date, y=cumulative_severity_7,label="COVID-19"),
