@@ -14,5 +14,6 @@ library(curl)
 library(wbstats)
 library(ggrepel)
 library(ggiraph)
+library(lubridate)
 
 source("utils.R")
