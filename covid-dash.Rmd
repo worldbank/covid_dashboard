@@ -42,14 +42,12 @@ new_wl         <- pin_get("new_wl", board = "rsconnect")
 #cg_data       <- pin_get("cg_data", board = "rsconnect")
 age_pop        <- pin_get("age_pop", board = "rsconnect")
 age_pop        <- age_pop$age_pop
-covid          <- pin_get("covid", board = "rsconnect")
 health         <- pin_get("health", board = "rsconnect")
 water          <- pin_get("water", board = "rsconnect")
 df             <- pin_get("dfsev", board = "rsconnect")
 
 
 #--------- covid data
-covid          <- covid$covid
 covid          <- c( "COVID-19 Cases: Case Fatality Rate",
                      "COVID-19 Cases: Confirmed",
                      "COVID-19 Cases: Confirmed (log scale)",
